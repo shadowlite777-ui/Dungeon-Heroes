@@ -19,8 +19,13 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
 
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+      - name: Install Gradle on Runner
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gradle
+
+      - name: Generate Gradle Wrapper Dynamically
+        run: gradle wrapper --gradle-version 7.5
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug
