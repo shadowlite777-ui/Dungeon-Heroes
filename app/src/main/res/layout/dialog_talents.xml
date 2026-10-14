@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/surface"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="Прокачка талантов"
+        android:textColor="@color/accent"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvAvailablePoints"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="Доступно очков: 0"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginVertical="12dp"
+        android:background="@color/text_secondary" />
+
+    <!-- Здоровье -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingVertical="6dp">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Здоровье (HP):"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp" />
+        <TextView
+            android:id="@+id/tvHealthVal"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="100"
+            android:textColor="@color/accent"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+        <Button
+            android:id="@+id/btnPlusHealth"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="+" />
+    </LinearLayout>
+
+    <!-- Сила -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingVertical="6dp">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Сила (Урон):"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp" />
+        <TextView
+            android:id="@+id/tvStrengthVal"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="10"
+            android:textColor="@color/accent"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+        <Button
+            android:id="@+id/btnPlusStrength"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="+" />
+    </LinearLayout>
+
+    <!-- Интеллект -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingVertical="6dp">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Интеллект (Мана/Закл):"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp" />
+        <TextView
+            android:id="@+id/tvIntVal"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="10"
+            android:textColor="@color/accent"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+        <Button
+            android:id="@+id/btnPlusInt"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="+" />
+    </LinearLayout>
+
+    <!-- Выносливость -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingVertical="6dp">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Выносливость (Вес):"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp" />
+        <TextView
+            android:id="@+id/tvStaminaVal"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="50"
+            android:textColor="@color/accent"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+        <Button
+            android:id="@+id/btnPlusStamina"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="+" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnCloseTalents"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Закрыть" />
+
+</LinearLayout>
