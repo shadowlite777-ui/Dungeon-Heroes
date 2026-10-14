@@ -158,7 +158,7 @@
                 android:text="@string/btn_talents" />
         </LinearLayout>
 
-        <!-- ЦЕНТРАЛЬНАЯ ЧАСТЬ (ПОКА ПРОСТО ИГРОВОЙ МИР / СЮЖЕТ) -->
+        <!-- ТЕКСТ СЮЖЕТА -->
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -169,10 +169,19 @@
                 android:id="@+id/tvGameLog"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Добро пожаловать в мир игры!\n\nПерсонаж создан. Используйте кнопку «Таланты» вверху, чтобы распределить очки навыков.\n\n(Здесь в следующих шагах появится текст событий и выбор действий)..."
+                android:text="Загрузка сюжета..."
                 android:textColor="@color/text_primary"
-                android:textSize="16sp" />
+                android:textSize="16sp"
+                android:lineSpacingExtra="4dp" />
         </ScrollView>
+
+        <!-- БЛОК ВАРИАНТОВ ВЫБОРА -->
+        <LinearLayout
+            android:id="@+id/layoutOptionsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp" />
 
     </LinearLayout>
 
