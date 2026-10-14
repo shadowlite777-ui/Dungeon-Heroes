@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Текстовая RPG</string>
+    <string name="btn_start">Старт</string>
+    <string name="title_char_creation">Создание персонажа</string>
+    <string name="hint_char_name">Введите имя героя</string>
+    <string name="class_warrior">Воин</string>
+    <string name="class_mage">Маг</string>
+    <string name="class_rogue">Разбойник</string>
+    <string name="btn_create">Начать приключение</string>
+    <string name="btn_talents">Таланты</string>
+</resources>
