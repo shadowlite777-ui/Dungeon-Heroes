@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,17 +20,19 @@ public class MainActivity extends AppCompatActivity {
     // Элементы создания персонажа
     private EditText etCharName;
     private RadioButton rbWarrior, rbMage, rbRogue;
-    private Button btnCreateChar;
 
     // Элементы игрового экрана
-    private TextView tvHeroInfo, tvHeroLevel;
-    private Button btnOpenTalents;
+    private TextView tvHeroInfo, tvHeroLevel, tvGameLog;
+    private LinearLayout layoutOptionsContainer;
+
+    // Менеджер сюжета
+    private StoryManager storyManager;
 
     // Характеристики персонажа
     private String heroName = "";
     private String heroClass = "";
     private int heroLevel = 1;
-    private int skillPoints = 3; // Даем 3 очка для теста на старте
+    private int skillPoints = 3;
 
     private int statHealth = 100;
     private int statStrength = 10;
@@ -41,6 +44,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        storyManager = new StoryManager();
+
         // Инициализация виджетов
         layoutMainMenu = findViewById(R.id.layoutMainMenu);
         layoutCharCreation = findViewById(R.id.layoutCharCreation);
@@ -51,13 +56,15 @@ public class MainActivity extends AppCompatActivity {
         rbWarrior = findViewById(R.id.rbWarrior);
         rbMage = findViewById(R.id.rbMage);
         rbRogue = findViewById(R.id.rbRogue);
-        btnCreateChar = findViewById(R.id.btnCreateChar);
+        Button btnCreateChar = findViewById(R.id.btnCreateChar);
 
         tvHeroInfo = findViewById(R.id.tvHeroInfo);
         tvHeroLevel = findViewById(R.id.tvHeroLevel);
-        btnOpenTalents = findViewById(R.id.btnOpenTalents);
+        tvGameLog = findViewById(R.id.tvGameLog);
+        layoutOptionsContainer = findViewById(R.id.layoutOptionsContainer);
+        Button btnOpenTalents = findViewById(R.id.btnOpenTalents);
 
-        // Кнопка Старт в главном меню -> переход к созданию персонажа
+        // Кнопка Старт в главном меню
         btnStartMenu.setOnClickListener(v -> {
             layoutMainMenu.setVisibility(View.GONE);
             layoutCharCreation.setVisibility(View.VISIBLE);
@@ -77,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
             else if (rbRogue.isChecked()) heroClass = "Разбойник";
 
             updateHeroUI();
+            renderCurrentStoryNode();
 
             // Переход на игровой экран
             layoutCharCreation.setVisibility(View.GONE);
@@ -90,6 +98,33 @@ public class MainActivity extends AppCompatActivity {
     private void updateHeroUI() {
         tvHeroInfo.setText(heroName + " (" + heroClass + ")");
         tvHeroLevel.setText("Уровень: " + heroLevel);
+    }
+
+    // Отображение текущего текстового узла сюжета и сгенерированных кнопок выбора
+    private void renderCurrentStoryNode() {
+        StoryNode node = storyManager.getCurrentNode();
+        tvGameLog.setText(node.getText());
+
+        layoutOptionsContainer.removeAllViews();
+
+        for (StoryNode.Option option : node.getOptions()) {
+            Button btnOption = new Button(this);
+            btnOption.setText(option.getText());
+            
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            params.setMargins(0, 0, 0, 16);
+            btnOption.setLayoutParams(params);
+
+            btnOption.setOnClickListener(v -> {
+                storyManager.selectOption(option.getTargetNodeId());
+                renderCurrentStoryNode();
+            });
+
+            layoutOptionsContainer.addView(btnOption);
+        }
     }
 
     // Окно талантов на полэкрана
@@ -113,7 +148,6 @@ public class MainActivity extends AppCompatActivity {
         Button btnPlusStamina = dialog.findViewById(R.id.btnPlusStamina);
         Button btnCloseTalents = dialog.findViewById(R.id.btnCloseTalents);
 
-        // Функция обновления текстов внутри диалога
         Runnable updateDialogUI = () -> {
             tvAvailablePoints.setText("Доступно очков: " + skillPoints);
             tvHealthVal.setText(String.valueOf(statHealth));
