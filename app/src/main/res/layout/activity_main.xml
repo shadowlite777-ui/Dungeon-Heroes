@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <!-- 1. ГЛАВНОЕ МЕНЮ -->
+    <LinearLayout
+        android:id="@+id/layoutMainMenu"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="48dp"
+            android:text="ЭХО СУДЬБЫ\nТекстовая RPG"
+            android:gravity="center"
+            android:textColor="@color/accent"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnStartMenu"
+            android:layout_width="200dp"
+            android:layout_height="60dp"
+            android:text="@string/btn_start"
+            android:textSize="18sp" />
+    </LinearLayout>
+
+    <!-- 2. СОЗДАНИЕ ПЕРСОНАЖА -->
+    <LinearLayout
+        android:id="@+id/layoutCharCreation"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="24dp"
+            android:text="@string/title_char_creation"
+            android:textColor="@color/accent"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etCharName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:hint="@string/hint_char_name"
+            android:inputType="textPersonName"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_secondary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:text="Выберите класс:"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp" />
+
+        <RadioGroup
+            android:id="@+id/rgClasses"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <RadioButton
+                android:id="@+id/rbWarrior"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="@string/class_warrior"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp" />
+
+            <RadioButton
+                android:id="@+id/rbMage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/class_mage"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp" />
+
+            <RadioButton
+                android:id="@+id/rbRogue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/class_rogue"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp" />
+        </RadioGroup>
+
+        <Button
+            android:id="@+id/btnCreateChar"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginTop="40dp"
+            android:text="@string/btn_create"
+            android:textSize="16sp" />
+    </LinearLayout>
+
+    <!-- 3. ОСНОВНОЙ ИГРОВОЙ ЭКРАН -->
+    <LinearLayout
+        android:id="@+id/layoutGameMain"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <!-- ВЕРХНЯЯ ПАНЕЛЬ С КНОПКОЙ ТАЛАНТОВ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/primary_variant"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="12dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvHeroInfo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Имя (Класс)"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvHeroLevel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Уровень: 1"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnOpenTalents"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_talents" />
+        </LinearLayout>
+
+        <!-- ЦЕНТРАЛЬНАЯ ЧАСТЬ (ПОКА ПРОСТО ИГРОВОЙ МИР / СЮЖЕТ) -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tvGameLog"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Добро пожаловать в мир игры!\n\nПерсонаж создан. Используйте кнопку «Таланты» вверху, чтобы распределить очки навыков.\n\n(Здесь в следующих шагах появится текст событий и выбор действий)..."
+                android:textColor="@color/text_primary"
+                android:textSize="16sp" />
+        </ScrollView>
+
+    </LinearLayout>
+
+</FrameLayout>
