@@ -12,32 +12,32 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.util.Random;
+
 public class MainActivity extends AppCompatActivity {
 
-    // Экраны (контейнеры)
     private View layoutMainMenu, layoutCharCreation, layoutGameMain;
-
-    // Элементы создания персонажа
     private EditText etCharName;
     private RadioButton rbWarrior, rbMage, rbRogue;
-
-    // Элементы игрового экрана
     private TextView tvHeroInfo, tvHeroLevel, tvGameLog;
     private LinearLayout layoutOptionsContainer;
 
-    // Менеджер сюжета
     private StoryManager storyManager;
 
-    // Характеристики персонажа
     private String heroName = "";
     private String heroClass = "";
     private int heroLevel = 1;
     private int skillPoints = 3;
 
     private int statHealth = 100;
+    private int currentHealth = 100;
     private int statStrength = 10;
     private int statIntelligence = 10;
     private int statStamina = 50;
+
+    // Переменные состояния боя
+    private boolean isInCombat = false;
+    private Monster activeMonster;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +46,6 @@ public class MainActivity extends AppCompatActivity {
 
         storyManager = new StoryManager();
 
-        // Инициализация виджетов
         layoutMainMenu = findViewById(R.id.layoutMainMenu);
         layoutCharCreation = findViewById(R.id.layoutCharCreation);
         layoutGameMain = findViewById(R.id.layoutGameMain);
@@ -64,13 +63,11 @@ public class MainActivity extends AppCompatActivity {
         layoutOptionsContainer = findViewById(R.id.layoutOptionsContainer);
         Button btnOpenTalents = findViewById(R.id.btnOpenTalents);
 
-        // Кнопка Старт в главном меню
         btnStartMenu.setOnClickListener(v -> {
             layoutMainMenu.setVisibility(View.GONE);
             layoutCharCreation.setVisibility(View.VISIBLE);
         });
 
-        // Кнопка создания персонажа
         btnCreateChar.setOnClickListener(v -> {
             String name = etCharName.getText().toString().trim();
             if (name.isEmpty()) {
@@ -83,15 +80,14 @@ public class MainActivity extends AppCompatActivity {
             else if (rbMage.isChecked()) heroClass = "Маг";
             else if (rbRogue.isChecked()) heroClass = "Разбойник";
 
+            currentHealth = statHealth;
             updateHeroUI();
             renderCurrentStoryNode();
 
-            // Переход на игровой экран
             layoutCharCreation.setVisibility(View.GONE);
             layoutGameMain.setVisibility(View.VISIBLE);
         });
 
-        // Кнопка открытия окна талантов
         btnOpenTalents.setOnClickListener(v -> showTalentsDialog());
     }
 
@@ -100,11 +96,16 @@ public class MainActivity extends AppCompatActivity {
         tvHeroLevel.setText("Уровень: " + heroLevel);
     }
 
-    // Отображение текущего текстового узла сюжета и сгенерированных кнопок выбора
     private void renderCurrentStoryNode() {
         StoryNode node = storyManager.getCurrentNode();
-        tvGameLog.setText(node.getText());
 
+        // Если узел связан с боем — запускаем бой
+        if (node.getId().equals("corridor_forward") && !isInCombat) {
+            startCombat();
+            return;
+        }
+
+        tvGameLog.setText(node.getText());
         layoutOptionsContainer.removeAllViews();
 
         for (StoryNode.Option option : node.getOptions()) {
@@ -127,7 +128,151 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Окно талантов на полэкрана
+    // Инициализация боя
+    private void startCombat() {
+        isInCombat = true;
+        activeMonster = Monster.generateMonster(heroLevel);
+        updateCombatScreen("На вашего пути встал противник!");
+    }
+
+    // Обновление экрана боя и отрисовка кнопок действий
+    private void updateCombatScreen(String message) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("=== БОЙ С МОНСТРОМ ===\n");
+        sb.append("Враг: ").append(activeMonster.getName()).append("\n");
+        sb.append("HP Врага: ").append(activeMonster.getCurrentHp()).append("/").append(activeMonster.getMaxHp()).append("\n");
+        sb.append("Ваше здоровье: ").append(currentHealth).append("/").append(statHealth).append("\n\n");
+        sb.append(message);
+
+        tvGameLog.setText(sb.toString());
+        layoutOptionsContainer.removeAllViews();
+
+        // Кнопка атаки
+        Button btnAttack = new Button(this);
+        btnAttack.setText("Атака (Сила: " + statStrength + ")");
+        btnAttack.setOnClickListener(v -> performHeroAttack());
+        
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(0, 0, 0, 16);
+        btnAttack.setLayoutParams(params);
+        layoutOptionsContainer.addView(btnAttack);
+
+        // Условия для побега:
+        // 1. Уровень монстра выше уровня героя на 3 и более
+        // 2. Уровень здоровья ниже 35%
+        boolean canFleeLevel = activeMonster.getLevel() >= heroLevel + 3;
+        boolean canFleeHealth = ((double) currentHealth / statHealth) < 0.35;
+
+        if (canFleeLevel || canFleeHealth) {
+            Button btnFlee = new Button(this);
+            btnFlee.setText("Сбежать из боя");
+            btnFlee.setLayoutParams(params);
+            btnFlee.setOnClickListener(v -> fleeCombat());
+            layoutOptionsContainer.addView(btnFlee);
+        }
+    }
+
+    // Логика атаки героя с учетом разницы уровней и разброса ±20%
+    private void performHeroAttack() {
+        Random random = new Random();
+        double baseDamage = statStrength; // Базовый урон зависит от силы
+        int levelDiff = activeMonster.getLevel() - heroLevel;
+
+        if (activeMonster.getLevel() < heroLevel) {
+            // Если уровень монстра ниже, урон повышен на 10%
+            baseDamage *= 1.10;
+        } else if (levelDiff > 0) {
+            // Если уровень выше, урон снижается на 5% за каждые 2 уровня превышения
+            int pairs = levelDiff / 2;
+            double reduction = pairs * 0.05;
+            baseDamage *= Math.max(0.1, (1.0 - reduction));
+        }
+
+        // Рандомный разброс ±20% (от 0.8 до 1.2)
+        double spread = 0.8 + (random.nextDouble() * 0.4);
+        int heroDamage = (int) Math.max(1, baseDamage * spread);
+
+        activeMonster.setCurrentHp(activeMonster.getCurrentHp() - heroDamage);
+
+        if (activeMonster.getCurrentHp() <= 0) {
+            // Победа
+            isInCombat = false;
+            tvGameLog.setText("Вы нанесли " + heroDamage + " урона.\n\nВы победили монстра " + activeMonster.getName() + "!");
+            layoutOptionsContainer.removeAllViews();
+
+            Button btnContinue = new Button(this);
+            btnContinue.setText("Продолжить путь");
+            btnContinue.setOnClickListener(v -> {
+                storyManager.selectOption("start");
+                renderCurrentStoryNode();
+            });
+            layoutOptionsContainer.addView(btnContinue);
+            return;
+        }
+
+        // Ход монстра
+        performMonsterAttack(heroDamage);
+    }
+
+    // Логика ответной атаки монстра
+    private void performMonsterAttack(int heroLastDamage) {
+        Random random = new Random();
+        double monsterBaseDmg = activeMonster.getAttackPower();
+        int levelDiff = activeMonster.getLevel() - heroLevel;
+
+        if (activeMonster.getLevel() > heroLevel) {
+            monsterBaseDmg *= (1.0 + (levelDiff * 0.05));
+        } else if (activeMonster.getLevel() < heroLevel) {
+            monsterBaseDmg *= (1.0 - (Math.abs(levelDiff) * 0.05));
+        }
+
+        double spread = 0.8 + (random.nextDouble() * 0.4);
+        int monsterDamage = (int) Math.max(1, monsterBaseDmg * spread);
+
+        currentHealth -= monsterDamage;
+
+        String resultMsg = "Вы нанесли " + heroLastDamage + " урона.\n" +
+                activeMonster.getName() + " атакует и наносит вам " + monsterDamage + " урона!";
+
+        if (currentHealth <= 0) {
+            currentHealth = 0;
+            isInCombat = false;
+            tvGameLog.setText(resultMsg + "\n\nВы погибли в бою...");
+            layoutOptionsContainer.removeAllViews();
+
+            Button btnRestart = new Button(this);
+            btnRestart.setText("Начать заново");
+            btnRestart.setOnClickListener(v -> {
+                currentHealth = statHealth;
+                storyManager.selectOption("start");
+                renderCurrentStoryNode();
+            });
+            layoutOptionsContainer.addView(btnRestart);
+            return;
+        }
+
+        updateCombatScreen(resultMsg);
+    }
+
+    // Побег из боя
+    private void fleeCombat() {
+        isInCombat = false;
+        tvGameLog.setText("Вы благополучно сбежали от опасного противника (" + activeMonster.getName() + ")!");
+        layoutOptionsContainer.removeAllViews();
+
+        Button btnContinue = new Button(this);
+        btnContinue.setText("Вернуться к развилке");
+        btnContinue.setOnClickListener(v -> {
+            storyManager.selectOption("start");
+            renderCurrentStoryNode();
+        });
+        layoutOptionsContainer.addView(btnContinue);
+    }
+
+    // Окно талантов
     private void showTalentsDialog() {
         final Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_talents);
@@ -162,6 +307,7 @@ public class MainActivity extends AppCompatActivity {
             if (skillPoints > 0) {
                 skillPoints--;
                 statHealth += 10;
+                currentHealth += 10;
                 updateDialogUI.run();
             } else {
                 Toast.makeText(this, "Нет свободных очков навыков!", Toast.LENGTH_SHORT).show();
