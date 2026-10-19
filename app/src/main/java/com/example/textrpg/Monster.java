@@ -43,7 +43,6 @@ public class Monster {
 
     public static Monster generateMonster(int heroLevel) {
         Random random = new Random();
-        // Уровень монстра: от -1 до +7 от уровня героя (минимум 1-й уровень)
         int minLevel = Math.max(1, heroLevel - 1);
         int maxLevel = heroLevel + 7;
         int level = minLevel + random.nextInt(maxLevel - minLevel + 1);
@@ -51,9 +50,18 @@ public class Monster {
         String[] names = {"Теневой гоблин", "Пещерный паук", "Скелет-воин", "Орк-разбойник", "Дикий ворг", "Болотная кикимора"};
         String name = names[random.nextInt(names.length)] + " [Ур. " + level + "]";
 
-        int maxHp = 40 + level * 15;
-        int attackPower = 8 + level * 3;
+        // Сбалансированные здоровье и урон монстра
+        int maxHp = 25 + level * 10;
+        int attackPower = 5 + level * 2;
 
         return new Monster(name, level, maxHp, attackPower);
+    }
+
+    // Расчет опыта за убийство монстра
+    public int calculateExpReward(int heroLevel) {
+        int baseExp = 35;
+        int diff = this.level - heroLevel;
+        double multiplier = 1.0 + (diff * 0.15); // +15% за уровень выше, -15% за уровень ниже
+        return (int) Math.max(10, baseExp * multiplier);
     }
 }
