@@ -118,15 +118,16 @@
         android:orientation="vertical"
         android:visibility="gone">
 
-        <!-- ВЕРХНЯЯ ПАНЕЛЬ С КНОПКОЙ ТАЛАНТОВ -->
+        <!-- ВЕРХНЯЯ ПАНЕЛЬ С ИНДИКАТОРАМИ И КНОПКОЙ ТАЛАНТОВ -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/primary_variant"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:padding="12dp">
+            android:padding="10dp">
 
+            <!-- ИНДИКАТОРЫ ХП И МАНЫ В ЛЕВОМ УГЛУ -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -139,7 +140,7 @@
                     android:layout_height="wrap_content"
                     android:text="Имя (Класс)"
                     android:textColor="@color/text_primary"
-                    android:textSize="16sp"
+                    android:textSize="15sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -148,7 +149,59 @@
                     android:layout_height="wrap_content"
                     android:text="Уровень: 1"
                     android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
+                    android:textSize="12sp" />
+
+                <!-- Полоса здоровья (Красная) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+                    <ProgressBar
+                        android:id="@+id/pbHealth"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="120dp"
+                        android:layout_height="12dp"
+                        android:max="100"
+                        android:progress="100"
+                        android:progressDrawable="@android:drawable/progress_horizontal"
+                        android:progressTint="#FF3333" />
+                    <TextView
+                        android:id="@+id/tvHealthStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:text="100/100 HP"
+                        android:textColor="#FF6666"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <!-- Полоса маны (Синяя) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+                    <ProgressBar
+                        android:id="@+id/pbMana"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="120dp"
+                        android:layout_height="12dp"
+                        android:max="100"
+                        android:progress="100"
+                        android:progressDrawable="@android:drawable/progress_horizontal"
+                        android:progressTint="#3399FF" />
+                    <TextView
+                        android:id="@+id/tvManaStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:text="30/30 MP"
+                        android:textColor="#66B2FF"
+                        android:textSize="11sp" />
+                </LinearLayout>
             </LinearLayout>
 
             <Button
@@ -158,22 +211,51 @@
                 android:text="@string/btn_talents" />
         </LinearLayout>
 
-        <!-- ТЕКСТ СЮЖЕТА -->
-        <ScrollView
+        <!-- ТЕКСТ СЮЖЕТА И ПАНЕЛЬ С КНОПКОЙ СПОСОБНОСТИ СПРАВА -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:padding="16dp">
+            android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/tvGameLog"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Загрузка сюжета..."
-                android:textColor="@color/text_primary"
-                android:textSize="16sp"
-                android:lineSpacingExtra="4dp" />
-        </ScrollView>
+            <ScrollView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/tvGameLog"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:lineSpacingExtra="4dp"
+                    android:text="Загрузка сюжета..."
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp" />
+            </ScrollView>
+
+            <!-- КВАДРАТНАЯ КНОПКА СПОСОБНОСТИ СПРАВА В БОЮ -->
+            <LinearLayout
+                android:id="@+id/layoutAbilityContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingEnd="12dp"
+                android:visibility="gone">
+
+                <Button
+                    android:id="@+id/btnClassAbility"
+                    android:layout_width="75dp"
+                    android:layout_height="75dp"
+                    android:padding="2dp"
+                    android:text="Раж"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+        </LinearLayout>
 
         <!-- БЛОК ВАРИАНТОВ ВЫБОРА -->
         <LinearLayout
