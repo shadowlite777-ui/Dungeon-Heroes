@@ -24,9 +24,12 @@ public class MainActivity extends AppCompatActivity {
 
     private StoryManager storyManager;
 
+    // Характеристики персонажа
     private String heroName = "";
     private String heroClass = "";
     private int heroLevel = 1;
+    private int currentExp = 0;
+    private int requiredExp = 100;
     private int skillPoints = 3;
 
     private int statHealth = 100;
@@ -34,8 +37,20 @@ public class MainActivity extends AppCompatActivity {
     private int statStrength = 10;
     private int statIntelligence = 10;
     private int statStamina = 50;
+    private int statDodge = 0; // В процентах
 
-    // Переменные состояния боя
+    // Инвентарь зелий
+    private int countSmallPotion = 0;   // +5% HP
+    private int countMediumPotion = 0;  // +10% HP
+    private int countLargePotion = 0;   // +20% HP
+    private int countDodgeElixir = 0;   // +10% Dodge на 3 хода
+    private int countArmorElixir = 0;   // +20% Armor на 3 хода
+
+    // Баффы в бою
+    private int buffDodgeTurns = 0;
+    private int buffArmorTurns = 0;
+
+    // Состояние боя
     private boolean isInCombat = false;
     private Monster activeMonster;
 
@@ -76,9 +91,16 @@ public class MainActivity extends AppCompatActivity {
             }
             heroName = name;
 
-            if (rbWarrior.isChecked()) heroClass = "Воин";
-            else if (rbMage.isChecked()) heroClass = "Маг";
-            else if (rbRogue.isChecked()) heroClass = "Разбойник";
+            if (rbWarrior.isChecked()) {
+                heroClass = "Воин";
+                statDodge = 10;
+            } else if (rbMage.isChecked()) {
+                heroClass = "Маг";
+                statDodge = 0;
+            } else if (rbRogue.isChecked()) {
+                heroClass = "Разбойник";
+                statDodge = 25;
+            }
 
             currentHealth = statHealth;
             updateHeroUI();
@@ -93,13 +115,38 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateHeroUI() {
         tvHeroInfo.setText(heroName + " (" + heroClass + ")");
-        tvHeroLevel.setText("Уровень: " + heroLevel);
+        tvHeroLevel.setText("Уровень: " + heroLevel + " [" + currentExp + "/" + requiredExp + " EXP]");
+    }
+
+    // Добавление опыта и проверка Level Up
+    private void addExperience(int amount) {
+        currentExp += amount;
+        boolean leveledUp = false;
+        while (currentExp >= requiredExp) {
+            currentExp -= requiredExp;
+            heroLevel++;
+            skillPoints++;
+            requiredExp = (int) (requiredExp * 1.60); // Требуемый опыт вырастает на 60%
+            leveledUp = true;
+        }
+        if (leveledUp) {
+            Toast.makeText(this, "Поздравляем! Достигнут " + heroLevel + " уровень! Получено 1 очко таланта.", Toast.LENGTH_LONG).show();
+        }
+        updateHeroUI();
+    }
+
+    // Расчет текущей брони с учетом уровня и баффа
+    private double getEffectiveArmor() {
+        double baseArmor = 100.0 + (heroLevel - 1) * 10.0; // +10% от базовой за уровень
+        if (buffArmorTurns > 0) {
+            baseArmor *= 1.20; // +20% от эликсира брони
+        }
+        return baseArmor;
     }
 
     private void renderCurrentStoryNode() {
         StoryNode node = storyManager.getCurrentNode();
 
-        // Если узел связан с боем — запускаем бой
         if (node.getId().equals("corridor_forward") && !isInCombat) {
             startCombat();
             return;
@@ -116,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
             );
-            params.setMargins(0, 0, 0, 16);
+            params.setMargins(0, 0, 0, 12);
             btnOption.setLayoutParams(params);
 
             btnOption.setOnClickListener(v -> {
@@ -128,41 +175,87 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Инициализация боя
     private void startCombat() {
         isInCombat = true;
+        buffDodgeTurns = 0;
+        buffArmorTurns = 0;
         activeMonster = Monster.generateMonster(heroLevel);
-        updateCombatScreen("На вашего пути встал противник!");
+        updateCombatScreen("На вашем пути встал противник!");
     }
 
-    // Обновление экрана боя и отрисовка кнопок действий
     private void updateCombatScreen(String message) {
         StringBuilder sb = new StringBuilder();
         sb.append("=== БОЙ С МОНСТРОМ ===\n");
         sb.append("Враг: ").append(activeMonster.getName()).append("\n");
         sb.append("HP Врага: ").append(activeMonster.getCurrentHp()).append("/").append(activeMonster.getMaxHp()).append("\n");
-        sb.append("Ваше здоровье: ").append(currentHealth).append("/").append(statHealth).append("\n\n");
+        sb.append("Ваше здоровье: ").append(currentHealth).append("/").append(statHealth).append("\n");
+        
+        int currentDodge = statDodge + (buffDodgeTurns > 0 ? 10 : 0);
+        sb.append("Броня: ").append((int)getEffectiveArmor()).append(" | Уклонение: ").append(currentDodge).append("%\n\n");
         sb.append(message);
 
         tvGameLog.setText(sb.toString());
         layoutOptionsContainer.removeAllViews();
 
-        // Кнопка атаки
-        Button btnAttack = new Button(this);
-        btnAttack.setText("Атака (Сила: " + statStrength + ")");
-        btnAttack.setOnClickListener(v -> performHeroAttack());
-        
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        params.setMargins(0, 0, 0, 16);
+        params.setMargins(0, 0, 0, 10);
+
+        // 1. Атака
+        Button btnAttack = new Button(this);
+        btnAttack.setText("Атака (Сила: " + statStrength + ")");
         btnAttack.setLayoutParams(params);
+        btnAttack.setOnClickListener(v -> performHeroAttack());
         layoutOptionsContainer.addView(btnAttack);
 
-        // Условия для побега:
-        // 1. Уровень монстра выше уровня героя на 3 и более
-        // 2. Уровень здоровья ниже 35%
+        // 2. Использование зелий в бою
+        if (countSmallPotion > 0) {
+            Button btn = new Button(this);
+            btn.setText("Малое зелье HP (" + countSmallPotion + " шт) [+5%]");
+            btn.setLayoutParams(params);
+            btn.setOnClickListener(v -> usePotion(0.05, 1, 0, 0));
+            layoutOptionsContainer.addView(btn);
+        }
+        if (countMediumPotion > 0) {
+            Button btn = new Button(this);
+            btn.setText("Среднее зелье HP (" + countMediumPotion + " шт) [+10%]");
+            btn.setLayoutParams(params);
+            btn.setOnClickListener(v -> usePotion(0.10, 0, 1, 0));
+            layoutOptionsContainer.addView(btn);
+        }
+        if (countLargePotion > 0) {
+            Button btn = new Button(this);
+            btn.setText("Большое зелье HP (" + countLargePotion + " шт) [+20%]");
+            btn.setLayoutParams(params);
+            btn.setOnClickListener(v -> usePotion(0.20, 0, 0, 1));
+            layoutOptionsContainer.addView(btn);
+        }
+        if (countDodgeElixir > 0 && buffDodgeTurns == 0) {
+            Button btn = new Button(this);
+            btn.setText("Эликсир уклонения (" + countDodgeElixir + " шт) [+10% Dodge]");
+            btn.setLayoutParams(params);
+            btn.setOnClickListener(v -> {
+                countDodgeElixir--;
+                buffDodgeTurns = 3;
+                performMonsterAttack(0, "Вы выпили эликсир уклонения (+10% Dodge на 3 хода)!\n");
+            });
+            layoutOptionsContainer.addView(btn);
+        }
+        if (countArmorElixir > 0 && buffArmorTurns == 0) {
+            Button btn = new Button(this);
+            btn.setText("Эликсир брони (" + countArmorElixir + " шт) [+20% Armor]");
+            btn.setLayoutParams(params);
+            btn.setOnClickListener(v -> {
+                countArmorElixir--;
+                buffArmorTurns = 3;
+                performMonsterAttack(0, "Вы выпили эликсир брони (+20% Брони на 3 хода)!\n");
+            });
+            layoutOptionsContainer.addView(btn);
+        }
+
+        // 3. Побег из боя
         boolean canFleeLevel = activeMonster.getLevel() >= heroLevel + 3;
         boolean canFleeHealth = ((double) currentHealth / statHealth) < 0.35;
 
@@ -175,32 +268,51 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Логика атаки героя с учетом разницы уровней и разброса ±20%
+    private void usePotion(double percent, int small, int medium, int large) {
+        countSmallPotion -= small;
+        countMediumPotion -= medium;
+        countLargePotion -= large;
+
+        int heal = (int) (statHealth * percent);
+        currentHealth = Math.min(statHealth, currentHealth + heal);
+
+        performMonsterAttack(0, "Вы выпили зелье и восстановили " + heal + " HP!\n");
+    }
+
     private void performHeroAttack() {
         Random random = new Random();
-        double baseDamage = statStrength; // Базовый урон зависит от силы
+        double baseDamage = statStrength;
         int levelDiff = activeMonster.getLevel() - heroLevel;
 
         if (activeMonster.getLevel() < heroLevel) {
-            // Если уровень монстра ниже, урон повышен на 10%
             baseDamage *= 1.10;
         } else if (levelDiff > 0) {
-            // Если уровень выше, урон снижается на 5% за каждые 2 уровня превышения
             int pairs = levelDiff / 2;
             double reduction = pairs * 0.05;
             baseDamage *= Math.max(0.1, (1.0 - reduction));
         }
 
-        // Рандомный разброс ±20% (от 0.8 до 1.2)
         double spread = 0.8 + (random.nextDouble() * 0.4);
         int heroDamage = (int) Math.max(1, baseDamage * spread);
 
         activeMonster.setCurrentHp(activeMonster.getCurrentHp() - heroDamage);
 
         if (activeMonster.getCurrentHp() <= 0) {
-            // Победа
             isInCombat = false;
-            tvGameLog.setText("Вы нанесли " + heroDamage + " урона.\n\nВы победили монстра " + activeMonster.getName() + "!");
+            int expReward = activeMonster.calculateExpReward(heroLevel);
+            String lootMsg = generateLoot();
+
+            StringBuilder victoryMsg = new StringBuilder();
+            victoryMsg.append("Вы нанесли ").append(heroDamage).append(" урона.\n\n");
+            victoryMsg.append("Вы победили монстра ").append(activeMonster.getName()).append("!\n");
+            victoryMsg.append("Получено опыта: +").append(expReward).append(" EXP\n");
+            if (!lootMsg.isEmpty()) {
+                victoryMsg.append("Выпавшая добыча:\n").append(lootMsg);
+            }
+
+            addExperience(expReward);
+
+            tvGameLog.setText(victoryMsg.toString());
             layoutOptionsContainer.removeAllViews();
 
             Button btnContinue = new Button(this);
@@ -213,13 +325,53 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        // Ход монстра
-        performMonsterAttack(heroDamage);
+        performMonsterAttack(heroDamage, "Вы нанесли " + heroDamage + " урона.\n");
     }
 
-    // Логика ответной атаки монстра
-    private void performMonsterAttack(int heroLastDamage) {
+    // Расчет шансов выпадения предметов
+    private String generateLoot() {
         Random random = new Random();
+        StringBuilder loot = new StringBuilder();
+
+        if (random.nextDouble() <= 0.70) {
+            countSmallPotion++;
+            loot.append("- Малое зелье HP\n");
+        }
+        if (random.nextDouble() <= 0.40) {
+            countMediumPotion++;
+            loot.append("- Среднее зелье HP\n");
+        }
+        if (random.nextDouble() <= 0.05) {
+            countLargePotion++;
+            loot.append("- Большое зелье HP\n");
+        }
+        if (random.nextDouble() <= 0.25) {
+            countDodgeElixir++;
+            loot.append("- Эликсир уклонения\n");
+        }
+        if (random.nextDouble() <= 0.25) {
+            countArmorElixir++;
+            loot.append("- Эликсир брони\n");
+        }
+
+        return loot.toString();
+    }
+
+    private void performMonsterAttack(int heroLastDamage, String prefixMessage) {
+        Random random = new Random();
+
+        // Уменьшение длительности баффов
+        if (buffDodgeTurns > 0) buffDodgeTurns--;
+        if (buffArmorTurns > 0) buffArmorTurns--;
+
+        // Проверка Уклонения
+        int effectiveDodge = statDodge + (buffDodgeTurns > 0 ? 10 : 0);
+        if (random.nextInt(100) < effectiveDodge) {
+            updateCombatScreen(prefixMessage + activeMonster.getName() + " атакует, но вы успешно УКЛОНИЛИСЬ!");
+            return;
+        }
+
+        // Расчет урона монстра
         double monsterBaseDmg = activeMonster.getAttackPower();
         int levelDiff = activeMonster.getLevel() - heroLevel;
 
@@ -230,12 +382,19 @@ public class MainActivity extends AppCompatActivity {
         }
 
         double spread = 0.8 + (random.nextDouble() * 0.4);
-        int monsterDamage = (int) Math.max(1, monsterBaseDmg * spread);
+        double rawDamage = monsterBaseDmg * spread;
 
-        currentHealth -= monsterDamage;
+        // Расчет поглощения броней (с учетом падения эффективности на 15% за уровень)
+        double currentArmor = getEffectiveArmor();
+        double efficiency = 1.0 / (1.0 + (heroLevel - 1) * 0.15);
+        double armorAbsorption = (currentArmor / 100.0) * 0.15 * efficiency; // 15% поглощения на 1 ур. при 100 брони
+        armorAbsorption = Math.min(0.75, armorAbsorption); // Максимальное поглощение 75%
 
-        String resultMsg = "Вы нанесли " + heroLastDamage + " урона.\n" +
-                activeMonster.getName() + " атакует и наносит вам " + monsterDamage + " урона!";
+        int finalMonsterDamage = (int) Math.max(1, rawDamage * (1.0 - armorAbsorption));
+
+        currentHealth -= finalMonsterDamage;
+
+        String resultMsg = prefixMessage + activeMonster.getName() + " атакует и наносит вам " + finalMonsterDamage + " урона (Поглощено броней: " + (int)(armorAbsorption * 100) + "%)!";
 
         if (currentHealth <= 0) {
             currentHealth = 0;
@@ -257,7 +416,6 @@ public class MainActivity extends AppCompatActivity {
         updateCombatScreen(resultMsg);
     }
 
-    // Побег из боя
     private void fleeCombat() {
         isInCombat = false;
         tvGameLog.setText("Вы благополучно сбежали от опасного противника (" + activeMonster.getName() + ")!");
@@ -272,7 +430,7 @@ public class MainActivity extends AppCompatActivity {
         layoutOptionsContainer.addView(btnContinue);
     }
 
-    // Окно талантов
+    // Окно прокачки талантов
     private void showTalentsDialog() {
         final Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_talents);
@@ -286,11 +444,13 @@ public class MainActivity extends AppCompatActivity {
         TextView tvStrengthVal = dialog.findViewById(R.id.tvStrengthVal);
         TextView tvIntVal = dialog.findViewById(R.id.tvIntVal);
         TextView tvStaminaVal = dialog.findViewById(R.id.tvStaminaVal);
+        TextView tvDodgeVal = dialog.findViewById(R.id.tvDodgeVal);
 
         Button btnPlusHealth = dialog.findViewById(R.id.btnPlusHealth);
         Button btnPlusStrength = dialog.findViewById(R.id.btnPlusStrength);
         Button btnPlusInt = dialog.findViewById(R.id.btnPlusInt);
         Button btnPlusStamina = dialog.findViewById(R.id.btnPlusStamina);
+        Button btnPlusDodge = dialog.findViewById(R.id.btnPlusDodge);
         Button btnCloseTalents = dialog.findViewById(R.id.btnCloseTalents);
 
         Runnable updateDialogUI = () -> {
@@ -299,6 +459,7 @@ public class MainActivity extends AppCompatActivity {
             tvStrengthVal.setText(String.valueOf(statStrength));
             tvIntVal.setText(String.valueOf(statIntelligence));
             tvStaminaVal.setText(String.valueOf(statStamina));
+            tvDodgeVal.setText(statDodge + "%");
         };
 
         updateDialogUI.run();
@@ -338,6 +499,16 @@ public class MainActivity extends AppCompatActivity {
             if (skillPoints > 0) {
                 skillPoints--;
                 statStamina += 5;
+                updateDialogUI.run();
+            } else {
+                Toast.makeText(this, "Нет свободных очков навыков!", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        btnPlusDodge.setOnClickListener(v -> {
+            if (skillPoints > 0) {
+                skillPoints--;
+                statDodge += 2; // Каждое очко добавляет 2% к уклонению
                 updateDialogUI.run();
             } else {
                 Toast.makeText(this, "Нет свободных очков навыков!", Toast.LENGTH_SHORT).show();
