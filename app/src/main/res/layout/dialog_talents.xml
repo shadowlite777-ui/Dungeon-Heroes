@@ -37,14 +37,14 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingVertical="6dp">
+        android:paddingVertical="4dp">
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Здоровье (HP):"
             android:textColor="@color/text_primary"
-            android:textSize="16sp" />
+            android:textSize="15sp" />
         <TextView
             android:id="@+id/tvHealthVal"
             android:layout_width="50dp"
@@ -52,12 +52,12 @@
             android:gravity="center"
             android:text="100"
             android:textColor="@color/accent"
-            android:textSize="16sp"
+            android:textSize="15sp"
             android:textStyle="bold" />
         <Button
             android:id="@+id/btnPlusHealth"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:text="+" />
     </LinearLayout>
 
@@ -67,14 +67,14 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingVertical="6dp">
+        android:paddingVertical="4dp">
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Сила (Урон):"
             android:textColor="@color/text_primary"
-            android:textSize="16sp" />
+            android:textSize="15sp" />
         <TextView
             android:id="@+id/tvStrengthVal"
             android:layout_width="50dp"
@@ -82,12 +82,12 @@
             android:gravity="center"
             android:text="10"
             android:textColor="@color/accent"
-            android:textSize="16sp"
+            android:textSize="15sp"
             android:textStyle="bold" />
         <Button
             android:id="@+id/btnPlusStrength"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:text="+" />
     </LinearLayout>
 
@@ -97,14 +97,14 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingVertical="6dp">
+        android:paddingVertical="4dp">
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Интеллект (Мана/Закл):"
             android:textColor="@color/text_primary"
-            android:textSize="16sp" />
+            android:textSize="15sp" />
         <TextView
             android:id="@+id/tvIntVal"
             android:layout_width="50dp"
@@ -112,12 +112,12 @@
             android:gravity="center"
             android:text="10"
             android:textColor="@color/accent"
-            android:textSize="16sp"
+            android:textSize="15sp"
             android:textStyle="bold" />
         <Button
             android:id="@+id/btnPlusInt"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:text="+" />
     </LinearLayout>
 
@@ -127,14 +127,14 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingVertical="6dp">
+        android:paddingVertical="4dp">
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Выносливость (Вес):"
             android:textColor="@color/text_primary"
-            android:textSize="16sp" />
+            android:textSize="15sp" />
         <TextView
             android:id="@+id/tvStaminaVal"
             android:layout_width="50dp"
@@ -142,12 +142,42 @@
             android:gravity="center"
             android:text="50"
             android:textColor="@color/accent"
-            android:textSize="16sp"
+            android:textSize="15sp"
             android:textStyle="bold" />
         <Button
             android:id="@+id/btnPlusStamina"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:text="+" />
+    </LinearLayout>
+
+    <!-- Уклонение -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingVertical="4dp">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Уклонение (%):"
+            android:textColor="@color/text_primary"
+            android:textSize="15sp" />
+        <TextView
+            android:id="@+id/tvDodgeVal"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="0%"
+            android:textColor="@color/accent"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+        <Button
+            android:id="@+id/btnPlusDodge"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:text="+" />
     </LinearLayout>
 
