@@ -17,10 +17,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="48dp"
-            android:text="🗡️ ЭХО СУДЬБЫ 🛡️\nТекстовая RPG"
+            android:text="🗡️ ГРАФИЧЕСКИЙ\nЛАБИРИНТ СУДЬБЫ 🛡️"
             android:gravity="center"
             android:textColor="@color/accent"
-            android:textSize="30sp"
+            android:textSize="28sp"
             android:textStyle="bold" />
 
         <Button
@@ -63,14 +63,6 @@
             android:inputType="textPersonName"
             android:textColor="@color/text_primary"
             android:textColorHint="@color/text_secondary" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:text="Выберите ваш класс:"
-            android:textColor="@color/text_primary"
-            android:textSize="16sp" />
 
         <RadioGroup
             android:id="@+id/rgClasses"
@@ -116,7 +108,7 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- 3. ОСНОВНОЙ ИГРОВОЙ ЭКРАН -->
+    <!-- 3. ОСНОВНОЙ ГРАФИЧЕСКИЙ ЭКРАН ИГРЫ -->
     <LinearLayout
         android:id="@+id/layoutGameMain"
         android:layout_width="match_parent"
@@ -124,7 +116,7 @@
         android:orientation="vertical"
         android:visibility="gone">
 
-        <!-- ВЕРХНЯЯ ПАНЕЛЬ С ИНДИКАТОРАМИ -->
+        <!-- ВЕРХНЯЯ ПАНЕЛЬ С ХАРАКТЕРИСТИКАМИИ И ИНДИКАТОРАМИ -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -156,7 +148,6 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
 
-                <!-- Полоса здоровья (3D Красная) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -166,8 +157,8 @@
                     <ProgressBar
                         android:id="@+id/pbHealth"
                         style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="130dp"
-                        android:layout_height="14dp"
+                        android:layout_width="120dp"
+                        android:layout_height="12dp"
                         android:max="100"
                         android:progress="100"
                         android:progressDrawable="@drawable/pb_3d_health" />
@@ -175,25 +166,24 @@
                         android:id="@+id/tvHealthStatus"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
+                        android:layout_marginStart="6dp"
                         android:text="100/100 HP"
                         android:textColor="#FF6666"
-                        android:textSize="12sp"
+                        android:textSize="11sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- Полоса маны (3D Синяя) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="3dp"
+                    android:layout_marginTop="2dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
                     <ProgressBar
                         android:id="@+id/pbMana"
                         style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="130dp"
-                        android:layout_height="14dp"
+                        android:layout_width="120dp"
+                        android:layout_height="12dp"
                         android:max="100"
                         android:progress="100"
                         android:progressDrawable="@drawable/pb_3d_mana" />
@@ -201,10 +191,10 @@
                         android:id="@+id/tvManaStatus"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
+                        android:layout_marginStart="6dp"
                         android:text="30/30 MP"
                         android:textColor="#66B2FF"
-                        android:textSize="12sp"
+                        android:textSize="11sp"
                         android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
@@ -221,28 +211,19 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- ЦЕНТРАЛЬНЫЙ ТЕКСТ СЮЖЕТА И ПРАВАЯ 3D-КНОПКА АБИЛКИ -->
+        <!-- ЦЕНТРАЛЬНЫЙ 2D Canvas ИГРОВОЙ ЭКРАН С ПАНЕЛЬЮ СПОСОБНОСТЕЙ -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:orientation="horizontal">
 
-            <ScrollView
+            <!-- НАШ СОБСТВЕННЫЙ CANVAS VIEW -->
+            <com.example.textrpg.GameView
+                android:id="@+id/gameView"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:padding="16dp">
-
-                <TextView
-                    android:id="@+id/tvGameLog"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:lineSpacingExtra="5dp"
-                    android:text="Загрузка сюжета..."
-                    android:textColor="@color/text_primary"
-                    android:textSize="16sp" />
-            </ScrollView>
+                android:layout_weight="1" />
 
             <LinearLayout
                 android:id="@+id/layoutAbilityContainer"
@@ -250,13 +231,13 @@
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
                 android:orientation="vertical"
-                android:paddingEnd="12dp"
+                android:paddingEnd="8dp"
                 android:visibility="gone">
 
                 <Button
                     android:id="@+id/btnClassAbility"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
+                    android:layout_width="75dp"
+                    android:layout_height="75dp"
                     android:background="@drawable/btn_3d_primary"
                     android:padding="2dp"
                     android:text="Раж"
@@ -264,16 +245,26 @@
                     android:textSize="11sp"
                     android:textStyle="bold" />
             </LinearLayout>
-
         </LinearLayout>
 
-        <!-- БЛОК ВАРИАНТОВ ВЫБОРА -->
+        <!-- ТЕКСТОВЫЙ ЛОГ И СОБЫТИЯ ПОД canvas -->
+        <TextView
+            android:id="@+id/tvGameLog"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="4dp"
+            android:text="Загрузка графического лабиринта..."
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
+
+        <!-- БЛОК КНОПОК ДВИЖЕНИЯ И БОЯ -->
         <LinearLayout
             android:id="@+id/layoutOptionsContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp" />
+            android:padding="12dp" />
 
     </LinearLayout>
 
