@@ -18,6 +18,9 @@ public class GameView extends SurfaceView implements Runnable {
     private RouteManager.EventResult currentEvent;
     private boolean isInCombatState = false;
 
+    private float animFrame = 0f;
+    private boolean triggerHitAnimation = false;
+
     public GameView(Context context, AttributeSet attrs) {
         super(context, attrs);
         holder = getHolder();
@@ -30,6 +33,10 @@ public class GameView extends SurfaceView implements Runnable {
     public void setEventState(RouteManager.EventResult event, boolean inCombat) {
         this.currentEvent = event;
         this.isInCombatState = inCombat;
+    }
+
+    public void triggerHit() {
+        this.triggerHitAnimation = true;
     }
 
     public void resume() {
@@ -52,10 +59,16 @@ public class GameView extends SurfaceView implements Runnable {
         while (isPlaying) {
             if (!holder.getSurface().isValid()) continue;
 
+            animFrame += 1.0f; // Увеличение счетчика фазы анимации
+
             Canvas canvas = holder.lockCanvas();
             if (canvas != null) {
                 renderGraphics(canvas);
                 holder.unlockCanvasAndPost(canvas);
+            }
+
+            if (triggerHitAnimation) {
+                triggerHitAnimation = false;
             }
 
             try {
@@ -66,53 +79,39 @@ public class GameView extends SurfaceView implements Runnable {
         }
     }
 
-    // Главный метод рисовки игрового мира
     private void renderGraphics(Canvas canvas) {
-        canvas.drawColor(Color.parseColor("#0D0B0E")); // Тёмный фон лабиринта
-
         float width = canvas.getWidth();
         float height = canvas.getHeight();
-        float tileSize = width / 5f;
 
-        // 1. Отрисовка развилки лабиринта (Тайлы пола и стен)
-        for (int row = 0; row < 5; row++) {
-            for (int col = 0; col < 5; col++) {
-                boolean isWall = (col == 0 || col == 4 || (row == 0 && col != 2));
-                GraphicsRenderer.drawDungeonTile(canvas, col * tileSize, row * tileSize, tileSize, isWall);
-            }
-        }
+        // 1. Отрисовка 2.5D коридора от первого лица
+        GraphicsRenderer.draw25DDungeon(canvas, width, height, animFrame);
 
-        // 2. Отрисовка игрока на стартовой позиции внизу
-        float heroX = width / 2f;
-        float heroY = tileSize * 3.5f;
-        GraphicsRenderer.drawHero(canvas, heroX, heroY, tileSize * 0.35f, currentHeroClass);
-
-        // 3. Отрисовка объекта развилки (Монстр / Сундук / Святыня) в центре
+        // 2. Отрисовка текущего анимированного объекта перед глазами героя
         if (currentEvent != null) {
-            float objX = width / 2f;
-            float objY = tileSize * 1.5f;
-
             if (currentEvent.type == RouteManager.EventType.MONSTER) {
-                GraphicsRenderer.drawMonster(canvas, objX, objY, tileSize, currentEvent.monster.getLevel());
+                GraphicsRenderer.draw25DMonster(canvas, width, height, currentEvent.monster.getLevel(), animFrame, triggerHitAnimation);
             } else if (currentEvent.type == RouteManager.EventType.CHEST) {
-                GraphicsRenderer.drawChest(canvas, objX, objY, tileSize);
+                GraphicsRenderer.draw25DChest(canvas, width, height, animFrame);
             } else if (currentEvent.type == RouteManager.EventType.SHRINE) {
-                GraphicsRenderer.drawShrine(canvas, objX, objY, tileSize);
+                GraphicsRenderer.draw25DShrine(canvas, width, height, animFrame);
             }
         }
 
-        // 4. Отрисовка статуса поверх графики
+        // 3. Отрисовка оружия героя от 1-го лица
+        GraphicsRenderer.drawHeroFirstPersonWeapon(canvas, width, height, currentHeroClass, animFrame);
+
+        // 4. Текстовый заголовок состояния
         Paint textPaint = new Paint();
         textPaint.setColor(Color.YELLOW);
-        textPaint.setTextSize(36f);
+        textPaint.setTextSize(34f);
         textPaint.setAntiAlias(true);
         textPaint.setTextAlign(Paint.Align.CENTER);
 
         if (isInCombatState) {
             textPaint.setColor(Color.RED);
-            canvas.drawText("⚔️ РЕЖИМ БОЯ ⚔️", width / 2f, 60f, textPaint);
+            canvas.drawText("⚔️ БОЙ С МОНСТРОМ ⚔️", width / 2f, 50f, textPaint);
         } else {
-            canvas.drawText("🧭 ВЫБЕРИТЕ НАПРАВЛЕНИЕ ПУТИ", width / 2f, 60f, textPaint);
+            canvas.drawText("🧭 ВЫБЕРИТЕ НАПРАВЛЕНИЕ", width / 2f, 50f, textPaint);
         }
     }
 }
