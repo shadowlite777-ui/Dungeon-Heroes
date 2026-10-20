@@ -19,6 +19,7 @@ import java.util.Random;
 public class MainActivity extends AppCompatActivity {
 
     private View layoutMainMenu, layoutCharCreation, layoutGameMain, layoutAbilityContainer;
+    private GameView gameView;
     private EditText etCharName;
     private RadioButton rbWarrior, rbMage, rbRogue;
     private TextView tvHeroInfo, tvHeroLevel, tvGameLog, tvHealthStatus, tvManaStatus;
@@ -72,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
         layoutCharCreation = findViewById(R.id.layoutCharCreation);
         layoutGameMain = findViewById(R.id.layoutGameMain);
         layoutAbilityContainer = findViewById(R.id.layoutAbilityContainer);
+        gameView = findViewById(R.id.gameView);
 
         Button btnStartMenu = findViewById(R.id.btnStartMenu);
         etCharName = findViewById(R.id.etCharName);
@@ -106,8 +108,9 @@ public class MainActivity extends AppCompatActivity {
             heroName = name;
             initHeroStats();
 
+            gameView.initGame(heroClass);
             updateHeroUI();
-            showRouteChoices("🏰 Вы у входа в Бесконечный Лабиринт. Куда вы хотите направиться?");
+            showRouteChoices("🏰 Вы смотрите на графическую карту Бесконечного Лабиринта.");
 
             layoutCharCreation.setVisibility(View.GONE);
             layoutGameMain.setVisibility(View.VISIBLE);
@@ -115,6 +118,18 @@ public class MainActivity extends AppCompatActivity {
 
         btnClassAbility.setOnClickListener(v -> useClassAbility());
         btnOpenTalents.setOnClickListener(v -> showTalentsDialog());
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (gameView != null) gameView.resume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (gameView != null) gameView.pause();
     }
 
     private int getMaxMana() {
@@ -199,7 +214,7 @@ public class MainActivity extends AppCompatActivity {
         if (leveledUp) {
             currentHealth = statHealth;
             currentMana = getMaxMana();
-            Toast.makeText(this, "✨ УРОВЕНЬ ПОВЫШЕН до " + heroLevel + "! Здоровье и Мана полностью восстановлены!", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "✨ УРОВЕНЬ ПОВЫШЕН до " + heroLevel + "! Здоровье и Мана восстановлены!", Toast.LENGTH_LONG).show();
         }
         updateHeroUI();
     }
@@ -212,17 +227,17 @@ public class MainActivity extends AppCompatActivity {
         return currentBase;
     }
 
-    // Отображение развилки с тремя вариантами движения (Прямо, Налево, Направо)
     private void showRouteChoices(String headerMessage) {
+        isInCombat = false;
         layoutAbilityContainer.setVisibility(View.GONE);
-        tvGameLog.setText(headerMessage + "\n\n🧭 **Выберите дальнейшее направление пути:**");
+        tvGameLog.setText(headerMessage);
         layoutOptionsContainer.removeAllViews();
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        params.setMargins(0, 0, 0, 12);
+        params.setMargins(0, 0, 0, 8);
 
         Button btnLeft = new Button(this);
         btnLeft.setText("⬅️ Пойти НАЛЕВО");
@@ -249,10 +264,11 @@ public class MainActivity extends AppCompatActivity {
         layoutOptionsContainer.addView(btnRight);
     }
 
-    // Обработка выбора дороги
     private void handleRouteSelection(String direction) {
         RouteManager.EventResult event = routeManager.generateEvent(direction, heroLevel);
         routeManager.advanceDepth();
+
+        gameView.setEventState(event, event.type == RouteManager.EventType.MONSTER);
 
         switch (event.type) {
             case MONSTER:
@@ -270,39 +286,31 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Событие: Сундук
     private void handleChestEvent(String desc) {
         Random random = new Random();
-        StringBuilder chestLoot = new StringBuilder(desc + "\n\n📦 **Содержимое сундука:**\n");
+        StringBuilder chestLoot = new StringBuilder(desc + "\n📦 Содержимое:");
 
         if (random.nextDouble() <= 0.6) {
             countMediumPotion++;
-            chestLoot.append("- 🧪 Среднее зелье HP\n");
+            chestLoot.append(" Среднее зелье HP;");
         }
         if (random.nextDouble() <= 0.3) {
             countManaPotion++;
-            chestLoot.append("- 💧 Зелье маны\n");
+            chestLoot.append(" Зелье маны;");
         }
-        if (random.nextDouble() <= 0.2) {
-            countDodgeElixir++;
-            chestLoot.append("- ⚡ Эликсир уклонения\n");
-        } else {
-            countSmallPotion++;
-            chestLoot.append("- 🧪 Малое зелье HP\n");
-        }
+        countSmallPotion++;
 
         tvGameLog.setText(chestLoot.toString());
         layoutOptionsContainer.removeAllViews();
 
         Button btnContinue = new Button(this);
-        btnContinue.setText("🗺️ Продолжить путь");
+        btnContinue.setText("🗺️ Идти дальше");
         btnContinue.setBackgroundResource(R.drawable.btn_3d_primary);
         btnContinue.setTextColor(Color.parseColor("#FFD700"));
-        btnContinue.setOnClickListener(v -> showRouteChoices("Вы успешно опустошили сундук и движетесь дальше."));
+        btnContinue.setOnClickListener(v -> showRouteChoices("Сундук открыт. Вы продолжаете путь."));
         layoutOptionsContainer.addView(btnContinue);
     }
 
-    // Событие: Святыня
     private void handleShrineEvent(String desc) {
         int healAmount = (int) (statHealth * 0.25);
         int manaAmount = (int) (getMaxMana() * 0.25);
@@ -310,7 +318,7 @@ public class MainActivity extends AppCompatActivity {
         currentMana = Math.min(getMaxMana(), currentMana + manaAmount);
         updateHeroUI();
 
-        tvGameLog.setText(desc + "\n\n✨ Святыня даровала вам благословение: восстановлено +" + healAmount + " HP и +" + manaAmount + " MP!");
+        tvGameLog.setText(desc + "\n✨ Восстановлено +" + healAmount + " HP и +" + manaAmount + " MP!");
         layoutOptionsContainer.removeAllViews();
 
         Button btnContinue = new Button(this);
@@ -321,17 +329,16 @@ public class MainActivity extends AppCompatActivity {
         layoutOptionsContainer.addView(btnContinue);
     }
 
-    // Событие: Ловушка / Тупик
     private void handleTrapEvent(String desc) {
         int damage = 5 + heroLevel * 2;
         currentHealth = Math.max(1, currentHealth - damage);
         updateHeroUI();
 
-        tvGameLog.setText(desc + "\n\n⚠️ Вы задели скрытую ловушку в темноте и потеряли -" + damage + " HP!");
+        tvGameLog.setText(desc + "\n⚠️ Потеряно -" + damage + " HP!");
         layoutOptionsContainer.removeAllViews();
 
         Button btnContinue = new Button(this);
-        btnContinue.setText("🗺️ Выбраться и продолжить путь");
+        btnContinue.setText("🗺️ Продолжить путь");
         btnContinue.setBackgroundResource(R.drawable.btn_3d_primary);
         btnContinue.setTextColor(Color.parseColor("#FFD700"));
         btnContinue.setOnClickListener(v -> showRouteChoices("Вы осторожно выходите на новую развилку."));
@@ -348,28 +355,18 @@ public class MainActivity extends AppCompatActivity {
         int manaRestored = (int) (getMaxMana() * 0.20);
         currentMana = Math.min(getMaxMana(), currentMana + manaRestored);
 
-        if (mageCooldownCombats > 0) {
-            mageCooldownCombats--;
-        }
+        if (mageCooldownCombats > 0) mageCooldownCombats--;
 
         activeMonster = monster;
         layoutAbilityContainer.setVisibility(View.VISIBLE);
         updateHeroUI();
-        updateCombatScreen(introMessage + "\n\n⚔️ Бой начался! (+20% MP восполнено)");
+        updateCombatScreen(introMessage + "\n⚔️ Начинается бой! (+20% MP восполнено)");
     }
 
     private void updateCombatScreen(String message) {
         StringBuilder sb = new StringBuilder();
-        sb.append("🔥 **БОЕВОЕ СТОЛКНОВЕНИЕ** 🔥\n");
-        sb.append("Враг: ").append(activeMonster.getName()).append("\n");
-        sb.append("HP Врага: ").append(activeMonster.getCurrentHp()).append("/").append(activeMonster.getMaxHp()).append("\n");
-
-        int currentDodge = statDodge + (buffDodgeTurns > 0 ? 10 : 0);
-        sb.append("Броня: ").append((int) getEffectiveArmor()).append(" | Уклонение: ").append(currentDodge).append("%\n");
-        if (rageAttacksLeft > 0) {
-            sb.append(" [Эффект «Раж»: ").append(rageAttacksLeft).append(" атк.]\n");
-        }
-        sb.append("\n").append(message);
+        sb.append("🔥 Враг: ").append(activeMonster.getName()).append(" [HP: ").append(activeMonster.getCurrentHp()).append("/").append(activeMonster.getMaxHp()).append("]\n");
+        sb.append(message);
 
         tvGameLog.setText(sb.toString());
         layoutOptionsContainer.removeAllViews();
@@ -378,7 +375,7 @@ public class MainActivity extends AppCompatActivity {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        params.setMargins(0, 0, 0, 10);
+        params.setMargins(0, 0, 0, 8);
 
         Button btnAttack = new Button(this);
         btnAttack.setText("⚔️ Атака (Сила: " + statStrength + ")");
@@ -390,34 +387,16 @@ public class MainActivity extends AppCompatActivity {
 
         if (countSmallPotion > 0) {
             Button btn = new Button(this);
-            btn.setText("🧪 Малое зелье HP (" + countSmallPotion + " шт) [+5%]");
+            btn.setText("🧪 Малое зелье HP (" + countSmallPotion + " шт)");
             btn.setBackgroundResource(R.drawable.btn_3d_primary);
             btn.setTextColor(Color.WHITE);
             btn.setLayoutParams(params);
             btn.setOnClickListener(v -> usePotion(0.05, 0, 1, 0, 0, 0, "Вы выпили малое зелье HP."));
             layoutOptionsContainer.addView(btn);
         }
-        if (countMediumPotion > 0) {
-            Button btn = new Button(this);
-            btn.setText("🧪 Среднее зелье HP (" + countMediumPotion + " шт) [+10%]");
-            btn.setBackgroundResource(R.drawable.btn_3d_primary);
-            btn.setTextColor(Color.WHITE);
-            btn.setLayoutParams(params);
-            btn.setOnClickListener(v -> usePotion(0.10, 0, 0, 1, 0, 0, "Вы выпили среднее зелье HP."));
-            layoutOptionsContainer.addView(btn);
-        }
-        if (countLargePotion > 0) {
-            Button btn = new Button(this);
-            btn.setText("🧪 Большое зелье HP (" + countLargePotion + " шт) [+20%]");
-            btn.setBackgroundResource(R.drawable.btn_3d_primary);
-            btn.setTextColor(Color.WHITE);
-            btn.setLayoutParams(params);
-            btn.setOnClickListener(v -> usePotion(0.20, 0, 0, 0, 1, 0, "Вы выпили большое зелье HP."));
-            layoutOptionsContainer.addView(btn);
-        }
         if (countManaPotion > 0) {
             Button btn = new Button(this);
-            btn.setText("💧 Зелье маны (" + countManaPotion + " шт) [+40% MP]");
+            btn.setText("💧 Зелье маны (" + countManaPotion + " шт)");
             btn.setBackgroundResource(R.drawable.btn_3d_primary);
             btn.setTextColor(Color.parseColor("#66B2FF"));
             btn.setLayoutParams(params);
@@ -445,52 +424,33 @@ public class MainActivity extends AppCompatActivity {
         countLargePotion -= large;
         countManaPotion -= manaP;
 
-        if (hpPct > 0) {
-            int heal = (int) (statHealth * hpPct);
-            currentHealth = Math.min(statHealth, currentHealth + heal);
-        }
-        if (mpPct > 0) {
-            int manaHeal = (int) (getMaxMana() * mpPct);
-            currentMana = Math.min(getMaxMana(), currentMana + manaHeal);
-        }
+        if (hpPct > 0) currentHealth = Math.min(statHealth, currentHealth + (int)(statHealth * hpPct));
+        if (mpPct > 0) currentMana = Math.min(getMaxMana(), currentMana + (int)(getMaxMana() * mpPct));
 
         updateHeroUI();
         updateCombatScreen(msg + "\nВаш ход продолжается.");
     }
 
     private void useClassAbility() {
-        if (!isInCombat) return;
-
-        if (abilityUsedThisCombat) {
-            Toast.makeText(this, "Способность уже использована в этом бою!", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        if (!isInCombat || abilityUsedThisCombat) return;
 
         int boostMultiplier = (heroLevel / 5);
 
         if (heroClass.equals("Воин")) {
-            if (currentMana < 4) {
-                Toast.makeText(this, "Недостаточно маны! Требуется 4 MP.", Toast.LENGTH_SHORT).show();
-                return;
-            }
+            if (currentMana < 4) return;
             currentMana -= 4;
             rageAttacksLeft = 2;
             abilityUsedThisCombat = true;
             updateHeroUI();
-            double ragePct = 70 + (boostMultiplier * 10);
-            updateCombatScreen("💥 «Раж» активирован! Урон следующих 2 атак увеличен на " + (int)ragePct + "%.");
+            updateCombatScreen("💥 «Раж» активирован! Следующие 2 атаки мощнее на " + (70 + boostMultiplier * 10) + "%.");
 
         } else if (heroClass.equals("Разбойник")) {
-            if (currentMana < 5) {
-                Toast.makeText(this, "Недостаточно маны! Требуется 5 MP.", Toast.LENGTH_SHORT).show();
-                return;
-            }
+            if (currentMana < 5) return;
             currentMana -= 5;
             abilityUsedThisCombat = true;
             updateHeroUI();
 
-            double rogueBonus = 2.30 + (boostMultiplier * 0.10);
-            double baseDmg = statStrength * (1.0 + rogueBonus);
+            double baseDmg = statStrength * (3.30 + boostMultiplier * 0.10);
             int finalDmg = (int) Math.max(1, baseDmg);
 
             activeMonster.setCurrentHp(activeMonster.getCurrentHp() - finalDmg);
@@ -503,47 +463,27 @@ public class MainActivity extends AppCompatActivity {
 
         } else if (heroClass.equals("Маг")) {
             int cost = getMageManaCost();
-            if (mageCooldownCombats > 0) {
-                Toast.makeText(this, "Перезарядка Мага (доступно через 1 бой).", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            if (currentMana < cost) {
-                Toast.makeText(this, "Недостаточно маны! Требуется " + cost + " MP.", Toast.LENGTH_SHORT).show();
-                return;
-            }
+            if (mageCooldownCombats > 0 || currentMana < cost) return;
             currentMana -= cost;
             abilityUsedThisCombat = true;
             mageCooldownCombats = 2;
             updateHeroUI();
 
             activeMonster.setCurrentHp(0);
-            processMonsterDefeatWithBonusPotion("🔮 ГНЕВ ДРЕВНИХ испепелил врага мгновенно!");
+            processMonsterDefeat("🔮 ГНЕВ ДРЕВНИХ испепелил врага мгновенно!");
         }
     }
 
     private void performHeroAttack() {
         Random random = new Random();
         double baseDamage = statStrength;
-        int levelDiff = activeMonster.getLevel() - heroLevel;
-
-        if (activeMonster.getLevel() < heroLevel) {
-            baseDamage *= 1.10;
-        } else if (levelDiff > 0) {
-            int pairs = levelDiff / 2;
-            double reduction = pairs * 0.05;
-            baseDamage *= Math.max(0.1, (1.0 - reduction));
-        }
 
         if (rageAttacksLeft > 0) {
-            int boostMultiplier = (heroLevel / 5);
-            double rageMultiplier = 1.70 + (boostMultiplier * 0.10);
-            baseDamage *= rageMultiplier;
+            baseDamage *= (1.70 + (heroLevel / 5) * 0.10);
             rageAttacksLeft--;
         }
 
-        double spread = 0.8 + (random.nextDouble() * 0.4);
-        int heroDamage = (int) Math.max(1, baseDamage * spread);
-
+        int heroDamage = (int) Math.max(1, baseDamage * (0.8 + random.nextDouble() * 0.4));
         activeMonster.setCurrentHp(activeMonster.getCurrentHp() - heroDamage);
 
         if (activeMonster.getCurrentHp() <= 0) {
@@ -555,120 +495,46 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void processMonsterDefeat(String attackLog) {
-        processMonsterDefeatInternal(attackLog, false);
-    }
-
-    private void processMonsterDefeatWithBonusPotion(String attackLog) {
-        processMonsterDefeatInternal(attackLog, true);
-    }
-
-    private void processMonsterDefeatInternal(String attackLog, boolean forceBonusPotion) {
         isInCombat = false;
         layoutAbilityContainer.setVisibility(View.GONE);
 
         int expReward = activeMonster.calculateExpReward(heroLevel);
-        String lootMsg = generateLoot(forceBonusPotion);
-
-        StringBuilder victoryMsg = new StringBuilder();
-        victoryMsg.append(attackLog).append("\n\n");
-        victoryMsg.append("🎉 **ПОБЕДА НАД ВРАГОМ** ").append(activeMonster.getName()).append("!\n");
-        victoryMsg.append("Опыт: +").append(expReward).append(" EXP\n");
-        if (!lootMsg.isEmpty()) {
-            victoryMsg.append("Выпавшая добыча:\n").append(lootMsg);
-        }
-
         addExperience(expReward);
 
-        tvGameLog.setText(victoryMsg.toString());
+        gameView.setEventState(null, false);
+
+        tvGameLog.setText(attackLog + "\n🎉 ПОБЕДА НАД " + activeMonster.getName() + "! Получено +" + expReward + " EXP.");
         layoutOptionsContainer.removeAllViews();
 
         Button btnContinue = new Button(this);
-        btnContinue.setText("🗺️ Выбрать дальнейший путь");
+        btnContinue.setText("🗺️ Выбрать новый путь");
         btnContinue.setBackgroundResource(R.drawable.btn_3d_primary);
         btnContinue.setTextColor(Color.parseColor("#FFD700"));
-        btnContinue.setOnClickListener(v -> showRouteChoices("Вы оглядываетесь по сторонам после победы."));
+        btnContinue.setOnClickListener(v -> showRouteChoices("Вы осматриваетесь после боя."));
         layoutOptionsContainer.addView(btnContinue);
-    }
-
-    private String generateLoot(boolean forceBonusPotion) {
-        Random random = new Random();
-        StringBuilder loot = new StringBuilder();
-
-        if (random.nextDouble() <= 0.70) {
-            countSmallPotion++;
-            loot.append("- 🧪 Малое зелье HP\n");
-        }
-        if (random.nextDouble() <= 0.40) {
-            countMediumPotion++;
-            loot.append("- 🧪 Среднее зелье HP\n");
-        }
-        if (random.nextDouble() <= 0.05) {
-            countLargePotion++;
-            loot.append("- 🧪 Большое зелье HP\n");
-        }
-        if (random.nextDouble() <= 0.15) {
-            countManaPotion++;
-            loot.append("- 💧 Зелье маны (+40% MP)\n");
-        }
-        if (random.nextDouble() <= 0.25) {
-            countDodgeElixir++;
-            loot.append("- ⚡ Эликсир уклонения\n");
-        }
-        if (random.nextDouble() <= 0.25) {
-            countArmorElixir++;
-            loot.append("- 🛡️ Эликсир брони\n");
-        }
-
-        if (forceBonusPotion) {
-            countManaPotion++;
-            loot.append("- 💧 [Древний свиток] Гарантированное зелье маны!\n");
-        }
-
-        return loot.toString();
     }
 
     private void performMonsterAttack(int heroLastDamage, String prefixMessage) {
         Random random = new Random();
 
-        if (buffDodgeTurns > 0) buffDodgeTurns--;
-        if (buffArmorTurns > 0) buffArmorTurns--;
-
-        int effectiveDodge = statDodge + (buffDodgeTurns > 0 ? 10 : 0);
-        if (random.nextInt(100) < effectiveDodge) {
-            updateCombatScreen(prefixMessage + activeMonster.getName() + " атакует, но вы успешно **УКЛОНИЛИСЬ**!");
+        if (random.nextInt(100) < statDodge) {
+            updateCombatScreen(prefixMessage + activeMonster.getName() + " атакует, но вы УКЛОНИЛИСЬ!");
             return;
         }
 
-        double monsterBaseDmg = activeMonster.getAttackPower();
-        int levelDiff = activeMonster.getLevel() - heroLevel;
-
-        if (activeMonster.getLevel() > heroLevel) {
-            monsterBaseDmg *= (1.0 + (levelDiff * 0.05));
-        } else if (activeMonster.getLevel() < heroLevel) {
-            monsterBaseDmg *= (1.0 - (Math.abs(levelDiff) * 0.05));
-        }
-
-        double spread = 0.8 + (random.nextDouble() * 0.4);
-        double rawDamage = monsterBaseDmg * spread;
-
         double currentArmor = getEffectiveArmor();
-        double efficiency = 1.0 / (1.0 + (heroLevel - 1) * 0.15);
-        double armorAbsorption = (currentArmor / 100.0) * 0.15 * efficiency;
-        armorAbsorption = Math.min(0.75, armorAbsorption);
+        double armorAbsorption = Math.min(0.75, (currentArmor / 100.0) * 0.15 / (1.0 + (heroLevel - 1) * 0.15));
+        int finalDamage = (int) Math.max(1, activeMonster.getAttackPower() * (0.8 + random.nextDouble() * 0.4) * (1.0 - armorAbsorption));
 
-        int finalMonsterDamage = (int) Math.max(1, rawDamage * (1.0 - armorAbsorption));
-
-        currentHealth -= finalMonsterDamage;
+        currentHealth -= finalDamage;
         updateHeroUI();
-
-        String resultMsg = prefixMessage + activeMonster.getName() + " наносит вам " + finalMonsterDamage + " урона! (Защита брони: " + (int) (armorAbsorption * 100) + "%)";
 
         if (currentHealth <= 0) {
             currentHealth = 0;
             updateHeroUI();
             isInCombat = false;
             layoutAbilityContainer.setVisibility(View.GONE);
-            tvGameLog.setText(resultMsg + "\n\n💀 **ВЫ ПОГИБЛИ В БОЮ!**\nПрогресс персонажа сброшен.");
+            tvGameLog.setText("💀 ВЫ ПОГИБЛИ В БОЮ!\nВсе уровни сброшены.");
             layoutOptionsContainer.removeAllViews();
 
             Button btnRestart = new Button(this);
@@ -678,27 +544,20 @@ public class MainActivity extends AppCompatActivity {
             btnRestart.setOnClickListener(v -> {
                 initHeroStats();
                 updateHeroUI();
-                showRouteChoices("🏰 Вы возвращаетесь к началу Бесконечного Лабиринта.");
+                showRouteChoices("🏰 Вы у начала Бесконечного Лабиринта.");
             });
             layoutOptionsContainer.addView(btnRestart);
             return;
         }
 
-        updateCombatScreen(resultMsg);
+        updateCombatScreen(prefixMessage + activeMonster.getName() + " наносит " + finalDamage + " урона!");
     }
 
     private void fleeCombat() {
         isInCombat = false;
         layoutAbilityContainer.setVisibility(View.GONE);
-        tvGameLog.setText("🏃 Вы успешно сбежали от противника (" + activeMonster.getName() + ") в безопасную зону лабиринта!");
-        layoutOptionsContainer.removeAllViews();
-
-        Button btnContinue = new Button(this);
-        btnContinue.setText("🧭 Выбрать новый путь");
-        btnContinue.setBackgroundResource(R.drawable.btn_3d_primary);
-        btnContinue.setTextColor(Color.parseColor("#FFD700"));
-        btnContinue.setOnClickListener(v -> showRouteChoices("Вы перевели дух и выбираете дорогу."));
-        layoutOptionsContainer.addView(btnContinue);
+        gameView.setEventState(null, false);
+        showRouteChoices("🏃 Вы успешно сбежали от " + activeMonster.getName() + "!");
     }
 
     private void showTalentsDialog() {
@@ -741,8 +600,6 @@ public class MainActivity extends AppCompatActivity {
                 statHealth += 10;
                 currentHealth += 10;
                 updateDialogUI.run();
-            } else {
-                Toast.makeText(this, "Нет свободных очков навыков!", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -751,8 +608,6 @@ public class MainActivity extends AppCompatActivity {
                 skillPoints--;
                 statStrength += 2;
                 updateDialogUI.run();
-            } else {
-                Toast.makeText(this, "Нет свободных очков навыков!", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -762,8 +617,6 @@ public class MainActivity extends AppCompatActivity {
                 statIntelligence += 2;
                 currentMana += 6;
                 updateDialogUI.run();
-            } else {
-                Toast.makeText(this, "Нет свободных очков навыков!", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -772,8 +625,6 @@ public class MainActivity extends AppCompatActivity {
                 skillPoints--;
                 statStamina += 5;
                 updateDialogUI.run();
-            } else {
-                Toast.makeText(this, "Нет свободных очков навыков!", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -782,13 +633,10 @@ public class MainActivity extends AppCompatActivity {
                 skillPoints--;
                 statDodge += 2;
                 updateDialogUI.run();
-            } else {
-                Toast.makeText(this, "Нет свободных очков навыков!", Toast.LENGTH_SHORT).show();
             }
         });
 
         btnCloseTalents.setOnClickListener(v -> dialog.dismiss());
-
         dialog.show();
     }
 }
