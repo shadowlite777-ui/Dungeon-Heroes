@@ -28,7 +28,6 @@ public class MainActivity extends AppCompatActivity {
 
     private StoryManager storyManager;
 
-    // Характеристики персонажа
     private String heroName = "";
     private String heroClass = "";
     private int heroLevel = 1;
@@ -43,25 +42,22 @@ public class MainActivity extends AppCompatActivity {
     private int statIntelligence = 10;
     private int statStamina = 50;
     private int statDodge = 0;
+    private double baseArmorValue = 100.0;
 
-    // Инвентарь зелий
     private int countSmallPotion = 0;
     private int countMediumPotion = 0;
     private int countLargePotion = 0;
-    private int countManaPotion = 0;    // +40% MP
+    private int countManaPotion = 0;
     private int countDodgeElixir = 0;
     private int countArmorElixir = 0;
 
-    // Эффекты и способности
-    private int rageAttacksLeft = 0;     // У Воина (урон +70% на 2 атаки)
+    private int rageAttacksLeft = 0;
     private boolean abilityUsedThisCombat = false;
-    private int mageCooldownCombats = 0; // Перезарядка мага (1 раз в 2 боя)
+    private int mageCooldownCombats = 0;
 
-    // Баффы в бою
     private int buffDodgeTurns = 0;
     private int buffArmorTurns = 0;
 
-    // Состояние боя
     private boolean isInCombat = false;
     private Monster activeMonster;
 
@@ -141,18 +137,21 @@ public class MainActivity extends AppCompatActivity {
         if (rbWarrior.isChecked()) {
             heroClass = "Воин";
             statDodge = 10;
+            baseArmorValue = 200.0; // Воину добавлена базовая броня 200
             btnClassAbility.setText("Раж\n(4 MP)");
-            btnClassAbility.setBackgroundColor(Color.parseColor("#8B7500")); // Тёмно-жёлтый
+            btnClassAbility.setBackgroundColor(Color.parseColor("#8B7500"));
         } else if (rbMage.isChecked()) {
             heroClass = "Маг";
             statDodge = 0;
-            btnClassAbility.setText("Гнев\nдревних\n(7 MP)");
-            btnClassAbility.setBackgroundColor(Color.parseColor("#00BFFF")); // Голубой
+            baseArmorValue = 100.0;
+            btnClassAbility.setText("Гнев\nдревних\n(" + getMageManaCost() + " MP)");
+            btnClassAbility.setBackgroundColor(Color.parseColor("#00BFFF"));
         } else if (rbRogue.isChecked()) {
             heroClass = "Разбойник";
             statDodge = 25;
+            baseArmorValue = 100.0;
             btnClassAbility.setText("Удар\nсмерти\n(5 MP)");
-            btnClassAbility.setBackgroundColor(Color.parseColor("#006400")); // Тёмно-зелёный
+            btnClassAbility.setBackgroundColor(Color.parseColor("#006400"));
         }
 
         countSmallPotion = 0;
@@ -164,11 +163,16 @@ public class MainActivity extends AppCompatActivity {
         mageCooldownCombats = 0;
     }
 
+    // Расчет стоимости способности мага (снижается каждые 5 уровней)
+    private int getMageManaCost() {
+        int reductions = heroLevel / 5;
+        return Math.max(2, 7 - reductions);
+    }
+
     private void updateHeroUI() {
         tvHeroInfo.setText(heroName + " (" + heroClass + ")");
         tvHeroLevel.setText("Уровень: " + heroLevel + " [" + currentExp + "/" + requiredExp + " EXP]");
 
-        // Обновление полосок HP и MP
         pbHealth.setMax(statHealth);
         pbHealth.setProgress(currentHealth);
         tvHealthStatus.setText(currentHealth + "/" + statHealth + " HP");
@@ -177,8 +181,13 @@ public class MainActivity extends AppCompatActivity {
         pbMana.setMax(maxMp);
         pbMana.setProgress(currentMana);
         tvManaStatus.setText(currentMana + "/" + maxMp + " MP");
+
+        if (heroClass.equals("Маг")) {
+            btnClassAbility.setText("Гнев\nдревних\n(" + getMageManaCost() + " MP)");
+        }
     }
 
+    // Повышение уровня: полная регенерация HP/MP!
     private void addExperience(int amount) {
         currentExp += amount;
         boolean leveledUp = false;
@@ -190,17 +199,19 @@ public class MainActivity extends AppCompatActivity {
             leveledUp = true;
         }
         if (leveledUp) {
-            Toast.makeText(this, "Поздравляем! Достигнут " + heroLevel + " уровень! Получено 1 очко таланта.", Toast.LENGTH_LONG).show();
+            currentHealth = statHealth; // Восполнение HP
+            currentMana = getMaxMana(); // Восполнение MP
+            Toast.makeText(this, "✨ УРОВЕНЬ ПОВЫШЕН до " + heroLevel + "! Здоровье и Мана полностью восстановлены!", Toast.LENGTH_LONG).show();
         }
         updateHeroUI();
     }
 
     private double getEffectiveArmor() {
-        double baseArmor = 100.0 + (heroLevel - 1) * 10.0;
+        double currentBase = baseArmorValue + (heroLevel - 1) * 10.0;
         if (buffArmorTurns > 0) {
-            baseArmor *= 1.20;
+            currentBase *= 1.20;
         }
-        return baseArmor;
+        return currentBase;
     }
 
     private void renderCurrentStoryNode() {
@@ -218,6 +229,8 @@ public class MainActivity extends AppCompatActivity {
         for (StoryNode.Option option : node.getOptions()) {
             Button btnOption = new Button(this);
             btnOption.setText(option.getText());
+            btnOption.setBackgroundResource(R.drawable.btn_3d_primary);
+            btnOption.setTextColor(Color.parseColor("#FFD700"));
 
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
@@ -242,7 +255,6 @@ public class MainActivity extends AppCompatActivity {
         rageAttacksLeft = 0;
         abilityUsedThisCombat = false;
 
-        // Восполнение маны на 20% в начале каждого боя
         int manaRestored = (int) (getMaxMana() * 0.20);
         currentMana = Math.min(getMaxMana(), currentMana + manaRestored);
 
@@ -253,12 +265,12 @@ public class MainActivity extends AppCompatActivity {
         activeMonster = Monster.generateMonster(heroLevel);
         layoutAbilityContainer.setVisibility(View.VISIBLE);
         updateHeroUI();
-        updateCombatScreen("На вашем пути встал противник! (+20% MP восполнено)");
+        updateCombatScreen("⚔️ ВРАГ НА ПУТИ! (+20% MP восстановлено)");
     }
 
     private void updateCombatScreen(String message) {
         StringBuilder sb = new StringBuilder();
-        sb.append("=== БОЙ С МОНСТРОМ ===\n");
+        sb.append("🔥 **БОЕВОЕ СТОЛКНОВЕНИЕ** 🔥\n");
         sb.append("Враг: ").append(activeMonster.getName()).append("\n");
         sb.append("HP Врага: ").append(activeMonster.getCurrentHp()).append("/").append(activeMonster.getMaxHp()).append("\n");
 
@@ -278,72 +290,59 @@ public class MainActivity extends AppCompatActivity {
         );
         params.setMargins(0, 0, 0, 10);
 
-        // 1. Атака
         Button btnAttack = new Button(this);
-        btnAttack.setText("Атака (Сила: " + statStrength + ")");
+        btnAttack.setText("⚔️ Атака (Сила: " + statStrength + ")");
+        btnAttack.setBackgroundResource(R.drawable.btn_3d_primary);
+        btnAttack.setTextColor(Color.parseColor("#FFD700"));
         btnAttack.setLayoutParams(params);
         btnAttack.setOnClickListener(v -> performHeroAttack());
         layoutOptionsContainer.addView(btnAttack);
 
-        // 2. Использование зелий (без завершения хода)
         if (countSmallPotion > 0) {
             Button btn = new Button(this);
-            btn.setText("Малое зелье HP (" + countSmallPotion + " шт) [+5%]");
+            btn.setText("🧪 Малое зелье HP (" + countSmallPotion + " шт) [+5%]");
+            btn.setBackgroundResource(R.drawable.btn_3d_primary);
+            btn.setTextColor(Color.WHITE);
             btn.setLayoutParams(params);
             btn.setOnClickListener(v -> usePotion(0.05, 0, 1, 0, 0, 0, "Вы выпили малое зелье HP."));
             layoutOptionsContainer.addView(btn);
         }
         if (countMediumPotion > 0) {
             Button btn = new Button(this);
-            btn.setText("Среднее зелье HP (" + countMediumPotion + " шт) [+10%]");
+            btn.setText("🧪 Среднее зелье HP (" + countMediumPotion + " шт) [+10%]");
+            btn.setBackgroundResource(R.drawable.btn_3d_primary);
+            btn.setTextColor(Color.WHITE);
             btn.setLayoutParams(params);
             btn.setOnClickListener(v -> usePotion(0.10, 0, 0, 1, 0, 0, "Вы выпили среднее зелье HP."));
             layoutOptionsContainer.addView(btn);
         }
         if (countLargePotion > 0) {
             Button btn = new Button(this);
-            btn.setText("Большое зелье HP (" + countLargePotion + " шт) [+20%]");
+            btn.setText("🧪 Большое зелье HP (" + countLargePotion + " шт) [+20%]");
+            btn.setBackgroundResource(R.drawable.btn_3d_primary);
+            btn.setTextColor(Color.WHITE);
             btn.setLayoutParams(params);
             btn.setOnClickListener(v -> usePotion(0.20, 0, 0, 0, 1, 0, "Вы выпили большое зелье HP."));
             layoutOptionsContainer.addView(btn);
         }
         if (countManaPotion > 0) {
             Button btn = new Button(this);
-            btn.setText("Зелье маны (" + countManaPotion + " шт) [+40% MP]");
+            btn.setText("💧 Зелье маны (" + countManaPotion + " шт) [+40% MP]");
+            btn.setBackgroundResource(R.drawable.btn_3d_primary);
+            btn.setTextColor(Color.parseColor("#66B2FF"));
             btn.setLayoutParams(params);
             btn.setOnClickListener(v -> usePotion(0, 0.40, 0, 0, 0, 1, "Вы выпили зелье маны."));
             layoutOptionsContainer.addView(btn);
         }
-        if (countDodgeElixir > 0 && buffDodgeTurns == 0) {
-            Button btn = new Button(this);
-            btn.setText("Эликсир уклонения (" + countDodgeElixir + " шт) [+10% Dodge]");
-            btn.setLayoutParams(params);
-            btn.setOnClickListener(v -> {
-                countDodgeElixir--;
-                buffDodgeTurns = 3;
-                updateCombatScreen("Вы выпили эликсир уклонения (+10% Dodge на 3 хода)!\nВаш ход продолжается.");
-            });
-            layoutOptionsContainer.addView(btn);
-        }
-        if (countArmorElixir > 0 && buffArmorTurns == 0) {
-            Button btn = new Button(this);
-            btn.setText("Эликсир брони (" + countArmorElixir + " шт) [+20% Armor]");
-            btn.setLayoutParams(params);
-            btn.setOnClickListener(v -> {
-                countArmorElixir--;
-                buffArmorTurns = 3;
-                updateCombatScreen("Вы выпили эликсир брони (+20% Брони на 3 хода)!\nВаш ход продолжается.");
-            });
-            layoutOptionsContainer.addView(btn);
-        }
 
-        // 3. Побег
         boolean canFleeLevel = activeMonster.getLevel() >= heroLevel + 3;
         boolean canFleeHealth = ((double) currentHealth / statHealth) < 0.35;
 
         if (canFleeLevel || canFleeHealth) {
             Button btnFlee = new Button(this);
-            btnFlee.setText("Сбежать из боя");
+            btnFlee.setText("🏃 Сбежать из боя");
+            btnFlee.setBackgroundResource(R.drawable.btn_3d_primary);
+            btnFlee.setTextColor(Color.LTGRAY);
             btnFlee.setLayoutParams(params);
             btnFlee.setOnClickListener(v -> fleeCombat());
             layoutOptionsContainer.addView(btnFlee);
@@ -369,7 +368,6 @@ public class MainActivity extends AppCompatActivity {
         updateCombatScreen(msg + "\nВаш ход продолжается.");
     }
 
-    // Использование уникальной способности класса
     private void useClassAbility() {
         if (!isInCombat) return;
 
@@ -377,6 +375,8 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Способность уже использована в этом бою!", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        int boostMultiplier = (heroLevel / 5); // +10% за каждые 5 уровней
 
         if (heroClass.equals("Воин")) {
             if (currentMana < 4) {
@@ -387,7 +387,8 @@ public class MainActivity extends AppCompatActivity {
             rageAttacksLeft = 2;
             abilityUsedThisCombat = true;
             updateHeroUI();
-            updateCombatScreen("Активирована способность «Раж»! Урон следующих 2 атак увеличен на 70%.");
+            double ragePct = 70 + (boostMultiplier * 10);
+            updateCombatScreen("💥 «Раж» активирован! Урон следующих 2 атак увеличен на " + (int)ragePct + "%.");
 
         } else if (heroClass.equals("Разбойник")) {
             if (currentMana < 5) {
@@ -398,35 +399,35 @@ public class MainActivity extends AppCompatActivity {
             abilityUsedThisCombat = true;
             updateHeroUI();
 
-            // «Удар смерти»: средний урон + 230% (итого х3.30)
-            double baseDmg = statStrength * 3.30;
+            double rogueBonus = 2.30 + (boostMultiplier * 0.10); // +10% к урону за каждые 5 уровней
+            double baseDmg = statStrength * (1.0 + rogueBonus);
             int finalDmg = (int) Math.max(1, baseDmg);
 
             activeMonster.setCurrentHp(activeMonster.getCurrentHp() - finalDmg);
 
             if (activeMonster.getCurrentHp() <= 0) {
-                processMonsterDefeat("Нанесен УДАР СМЕРТИ (" + finalDmg + " урона)!");
+                processMonsterDefeat("🗡️ УДАР СМЕРТИ нанес " + finalDmg + " урона!");
             } else {
-                performMonsterAttack(finalDmg, "УДАР СМЕРТИ нанес " + finalDmg + " урона!\n");
+                performMonsterAttack(finalDmg, "🗡️ УДАР СМЕРТИ нанес " + finalDmg + " урона!\n");
             }
 
         } else if (heroClass.equals("Маг")) {
+            int cost = getMageManaCost();
             if (mageCooldownCombats > 0) {
-                Toast.makeText(this, "Способность Мага перезаряжается (доступно через 1 бой).", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Перезарядка Мага (доступно через 1 бой).", Toast.LENGTH_SHORT).show();
                 return;
             }
-            if (currentMana < 7) {
-                Toast.makeText(this, "Недостаточно маны! Требуется 7 MP.", Toast.LENGTH_SHORT).show();
+            if (currentMana < cost) {
+                Toast.makeText(this, "Недостаточно маны! Требуется " + cost + " MP.", Toast.LENGTH_SHORT).show();
                 return;
             }
-            currentMana -= 7;
+            currentMana -= cost;
             abilityUsedThisCombat = true;
-            mageCooldownCombats = 2; // Восстановится через 2 боя
+            mageCooldownCombats = 2;
             updateHeroUI();
 
-            // «Гнев древних»: мгновенное убийство + гарантированный зелейный дроп
             activeMonster.setCurrentHp(0);
-            processMonsterDefeatWithBonusPotion("ГНЕВ ДРЕВНИХ испепелил врага мгновенно!");
+            processMonsterDefeatWithBonusPotion("🔮 ГНЕВ ДРЕВНИХ испепелил врага мгновенно!");
         }
     }
 
@@ -443,9 +444,10 @@ public class MainActivity extends AppCompatActivity {
             baseDamage *= Math.max(0.1, (1.0 - reduction));
         }
 
-        // Если включен «Раж» у воина
         if (rageAttacksLeft > 0) {
-            baseDamage *= 1.70;
+            int boostMultiplier = (heroLevel / 5);
+            double rageMultiplier = 1.70 + (boostMultiplier * 0.10);
+            baseDamage *= rageMultiplier;
             rageAttacksLeft--;
         }
 
@@ -479,8 +481,8 @@ public class MainActivity extends AppCompatActivity {
 
         StringBuilder victoryMsg = new StringBuilder();
         victoryMsg.append(attackLog).append("\n\n");
-        victoryMsg.append("Вы победили монстра ").append(activeMonster.getName()).append("!\n");
-        victoryMsg.append("Получено опыта: +").append(expReward).append(" EXP\n");
+        victoryMsg.append("🎉 **ПОБЕДА НАД ВРАГОМ** ").append(activeMonster.getName()).append("!\n");
+        victoryMsg.append("Опыт: +").append(expReward).append(" EXP\n");
         if (!lootMsg.isEmpty()) {
             victoryMsg.append("Выпавшая добыча:\n").append(lootMsg);
         }
@@ -491,7 +493,9 @@ public class MainActivity extends AppCompatActivity {
         layoutOptionsContainer.removeAllViews();
 
         Button btnContinue = new Button(this);
-        btnContinue.setText("Продолжить путь");
+        btnContinue.setText("🗺️ Продолжить путь");
+        btnContinue.setBackgroundResource(R.drawable.btn_3d_primary);
+        btnContinue.setTextColor(Color.parseColor("#FFD700"));
         btnContinue.setOnClickListener(v -> {
             storyManager.selectOption("start");
             renderCurrentStoryNode();
@@ -505,34 +509,32 @@ public class MainActivity extends AppCompatActivity {
 
         if (random.nextDouble() <= 0.70) {
             countSmallPotion++;
-            loot.append("- Малое зелье HP\n");
+            loot.append("- 🧪 Малое зелье HP\n");
         }
         if (random.nextDouble() <= 0.40) {
             countMediumPotion++;
-            loot.append("- Среднее зелье HP\n");
+            loot.append("- 🧪 Среднее зелье HP\n");
         }
         if (random.nextDouble() <= 0.05) {
             countLargePotion++;
-            loot.append("- Большое зелье HP\n");
+            loot.append("- 🧪 Большое зелье HP\n");
         }
-        // Шанс 15% на зелье маны
         if (random.nextDouble() <= 0.15) {
             countManaPotion++;
-            loot.append("- Зелье маны (+40% MP)\n");
+            loot.append("- 💧 Зелье маны (+40% MP)\n");
         }
         if (random.nextDouble() <= 0.25) {
             countDodgeElixir++;
-            loot.append("- Эликсир уклонения\n");
+            loot.append("- ⚡ Эликсир уклонения\n");
         }
         if (random.nextDouble() <= 0.25) {
             countArmorElixir++;
-            loot.append("- Эликсир брони\n");
+            loot.append("- 🛡️ Эликсир брони\n");
         }
 
-        // Бонусное гарантированное зелье за способность Мага
         if (forceBonusPotion) {
             countManaPotion++;
-            loot.append("- [Древний манускрипт] Гарантированное зелье маны!\n");
+            loot.append("- 💧 [Древний свиток] Гарантированное зелье маны!\n");
         }
 
         return loot.toString();
@@ -546,7 +548,7 @@ public class MainActivity extends AppCompatActivity {
 
         int effectiveDodge = statDodge + (buffDodgeTurns > 0 ? 10 : 0);
         if (random.nextInt(100) < effectiveDodge) {
-            updateCombatScreen(prefixMessage + activeMonster.getName() + " атакует, но вы успешно УКЛОНИЛИСЬ!");
+            updateCombatScreen(prefixMessage + activeMonster.getName() + " атакует, но вы успешно **УКЛОНИЛИСЬ**!");
             return;
         }
 
@@ -572,18 +574,20 @@ public class MainActivity extends AppCompatActivity {
         currentHealth -= finalMonsterDamage;
         updateHeroUI();
 
-        String resultMsg = prefixMessage + activeMonster.getName() + " атакует и наносит вам " + finalMonsterDamage + " урона (Поглощено броней: " + (int) (armorAbsorption * 100) + "%)!";
+        String resultMsg = prefixMessage + activeMonster.getName() + " наносит вам " + finalMonsterDamage + " урона! (Защита брони: " + (int) (armorAbsorption * 100) + "%)";
 
         if (currentHealth <= 0) {
             currentHealth = 0;
             updateHeroUI();
             isInCombat = false;
             layoutAbilityContainer.setVisibility(View.GONE);
-            tvGameLog.setText(resultMsg + "\n\nВЫ ПОГИБЛИ В БОЮ!\nВсе накопленные уровни, навыки и зелья сброшены.");
+            tvGameLog.setText(resultMsg + "\n\n💀 **ВЫ ПОГИБЛИ В БОЮ!**\nПрогресс персонажа сброшен.");
             layoutOptionsContainer.removeAllViews();
 
             Button btnRestart = new Button(this);
-            btnRestart.setText("Начать заново с 1 уровня");
+            btnRestart.setText("🔄 Начать заново с 1 уровня");
+            btnRestart.setBackgroundResource(R.drawable.btn_3d_primary);
+            btnRestart.setTextColor(Color.RED);
             btnRestart.setOnClickListener(v -> {
                 initHeroStats();
                 updateHeroUI();
@@ -600,11 +604,13 @@ public class MainActivity extends AppCompatActivity {
     private void fleeCombat() {
         isInCombat = false;
         layoutAbilityContainer.setVisibility(View.GONE);
-        tvGameLog.setText("Вы благополучно сбежали от опасного противника (" + activeMonster.getName() + ")!");
+        tvGameLog.setText("🏃 Вы сбежали от противника (" + activeMonster.getName() + ")!");
         layoutOptionsContainer.removeAllViews();
 
         Button btnContinue = new Button(this);
-        btnContinue.setText("Вернуться к развилке");
+        btnContinue.setText("🚪 Вернуться к развилке");
+        btnContinue.setBackgroundResource(R.drawable.btn_3d_primary);
+        btnContinue.setTextColor(Color.parseColor("#FFD700"));
         btnContinue.setOnClickListener(v -> {
             storyManager.selectOption("start");
             renderCurrentStoryNode();
@@ -671,7 +677,7 @@ public class MainActivity extends AppCompatActivity {
             if (skillPoints > 0) {
                 skillPoints--;
                 statIntelligence += 2;
-                currentMana += 6; // С увеличением интеллекта растет макс. мана и текущая
+                currentMana += 6;
                 updateDialogUI.run();
             } else {
                 Toast.makeText(this, "Нет свободных очков навыков!", Toast.LENGTH_SHORT).show();
