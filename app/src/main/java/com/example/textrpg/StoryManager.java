@@ -12,47 +12,48 @@ public class StoryManager {
     }
 
     private void initStory() {
+        // Локация 1: Старт
         StoryNode start = new StoryNode("start", 
-            "Вы приходите в себя в полуразрушенной каменной келье. Воздух пахнет сыростью и старыми фолиантами. Перед вами две массивные двери: дубовая, закованная в железо, и старая деревянная, из-под которой пробивается слабый свет.");
-        start.addOption("Открыть тяжелую дубовую дверь", "oak_door");
-        start.addOption("Осмотреть старую деревянную дверь", "wooden_door");
-        start.addOption("Обыскать келью", "search_cell");
+            "⚔️ **ПРОБУЖДЕНИЕ В КЕЛЬЕ**\n\nВы приходите в себя в древней каменной келье. Воздух пропитан магией и сыростью. Вы видите две тяжелые двери и заваленный алтарь.");
+        start.addOption("🚪 Войти в массивную дубовую дверь", "oak_door");
+        start.addOption("🚪 Осмотреть хлипкую деревянную дверь", "wooden_door");
+        start.addOption("🔍 Обыскать разрушенный алтарь", "search_cell");
         nodes.put(start.getId(), start);
 
+        // Локация 2: Заброшенный алтарь
+        StoryNode searchCell = new StoryNode("search_cell", 
+            "✨ **ДРЕВНИЙ АЛТАРЬ**\n\nСреди обломков вы находите горящие угли и затерянный сундучок. Здесь можно перевести дух или исследовать тайник.");
+        searchCell.addOption("⚔️ Исследовать мрачный коридор за алтарём", "corridor_forward");
+        searchCell.addOption("🚪 Вернуться к главным дверям", "start");
+        nodes.put(searchCell.getId(), searchCell);
+
+        // Локация 3: Коридор испытаний (Бой)
         StoryNode oakDoor = new StoryNode("oak_door", 
-            "С трудом толкнув тяжелую дверь, вы оказываетесь в мрачном коридоре. Вдали слышен звон капель и глухое рычание. Вы видите следы крови на полу.");
-        oakDoor.addOption("Осторожно продвигаться вперед на звук", "corridor_forward");
-        oakDoor.addOption("Вернуться в келью", "start");
+            "🕯️ **МРАЧНЫЙ КОРИДОР**\n\nТяжелая дверь со скрипом поддается. Впереди слышится рычание и эхо шагов. Пути назад нет — впереди враг!");
+        oakDoor.addOption("⚔️ Сделать шаг вперед и вступить в бой", "corridor_forward");
         nodes.put(oakDoor.getId(), oakDoor);
 
         StoryNode woodenDoor = new StoryNode("wooden_door", 
-            "Толкнув заклинившую дверь, вы попадаете в заброшенную библиотеку. Шкафы обрушились, но на одном из столов лежит таинственный свиток, светящийся синеватым светом.");
-        woodenDoor.addOption("Взять светящийся свиток", "take_scroll");
-        woodenDoor.addOption("Игнорировать свиток и пройти в соседний зал", "library_hall");
-        woodenDoor.addOption("Вернуться в келью", "start");
+            "📜 **ЗАБРОШЕННАЯ БИБЛИОТЕКА**\n\nВы оказываетесь среди старинных стеллажей. На полу видна свежая цепочка следов монстра.");
+        woodenDoor.addOption("⚔️ Идти по следам чудовища", "corridor_forward");
+        woodenDoor.addOption("🏰 Спуститься в катакомбы", "catacombs");
         nodes.put(woodenDoor.getId(), woodenDoor);
 
-        StoryNode searchCell = new StoryNode("search_cell", 
-            "В углу под грудой соломы вы находите старый потертый кинжал и флягу с водой. Взяв находки, вы вновь поворачиваетесь к дверям.");
-        searchCell.addOption("Подойти к дубовой двери", "oak_door");
-        searchCell.addOption("Подойти к деревянной двери", "wooden_door");
-        nodes.put(searchCell.getId(), searchCell);
-
-        // Этот узел запускает боевую систему в MainActivity
-        StoryNode corridorForward = new StoryNode("corridor_forward", 
-            "Продвигаясь по коридору, вы сталкиваетесь с монстром!");
-        corridorForward.addOption("Начать заново", "start");
+        // Локация 4: Сюжетное продвижение
+        StoryNode corridorForward = new StoryNode("corridor_forward", "Боевое столкновение!");
         nodes.put(corridorForward.getId(), corridorForward);
 
-        StoryNode takeScroll = new StoryNode("take_scroll", 
-            "Как только ваши пальцы касаются свитка, магическая энергия наполняет ваше тело! Вы чувствуете прилив сил.");
-        takeScroll.addOption("Вернуться к дверям", "start");
-        nodes.put(takeScroll.getId(), takeScroll);
+        StoryNode catacombs = new StoryNode("catacombs", 
+            "💀 **ПОДЗЕМНЫЕ КАТАКОМБЫ**\n\nВы спускаетесь всё глубже под землю. Воздух становится холоднее, а стены покрыты светящимся мхом. Впереди виден вход в Тронный Зал.");
+        catacombs.addOption("⚔️ Исследовать тёмный туннель", "corridor_forward");
+        catacombs.addOption("👑 Шагнуть к Тронному Залу", "throne_room");
+        nodes.put(catacombs.getId(), catacombs);
 
-        StoryNode libraryHall = new StoryNode("library_hall", 
-            "Вы выходите в просторный зал библиотеки и видите запертый сундук с древними рунами.");
-        libraryHall.addOption("Вернуться в келью", "start");
-        nodes.put(libraryHall.getId(), libraryHall);
+        StoryNode throne_room = new StoryNode("throne_room", 
+            "👑 **ТРОННЫЙ ЗАЛ ДРЕВНИХ**\n\nВы выходите в гигантский зал с высокой колоннадой. На трон восседает тень древнего стража. Приготовьтесь к серьезному испытанию!");
+        throne_room.addOption("⚔️ Принять вызов Стража Трона", "corridor_forward");
+        throne_room.addOption("🚪 Вернуться в Катакомбы", "catacombs");
+        nodes.put(throne_room.getId(), throne_room);
 
         currentNodeId = "start";
     }
