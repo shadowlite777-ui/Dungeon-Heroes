@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnClassAbility;
     private LinearLayout layoutOptionsContainer;
 
-    private StoryManager storyManager;
+    private RouteManager routeManager;
 
     private String heroName = "";
     private String heroClass = "";
@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        storyManager = new StoryManager();
+        routeManager = new RouteManager();
 
         layoutMainMenu = findViewById(R.id.layoutMainMenu);
         layoutCharCreation = findViewById(R.id.layoutCharCreation);
@@ -107,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
             initHeroStats();
 
             updateHeroUI();
-            renderCurrentStoryNode();
+            showRouteChoices("🏰 Вы у входа в Бесконечный Лабиринт. Куда вы хотите направиться?");
 
             layoutCharCreation.setVisibility(View.GONE);
             layoutGameMain.setVisibility(View.VISIBLE);
@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
         if (rbWarrior.isChecked()) {
             heroClass = "Воин";
             statDodge = 10;
-            baseArmorValue = 200.0; // Воину добавлена базовая броня 200
+            baseArmorValue = 200.0;
             btnClassAbility.setText("Раж\n(4 MP)");
             btnClassAbility.setBackgroundColor(Color.parseColor("#8B7500"));
         } else if (rbMage.isChecked()) {
@@ -163,7 +163,6 @@ public class MainActivity extends AppCompatActivity {
         mageCooldownCombats = 0;
     }
 
-    // Расчет стоимости способности мага (снижается каждые 5 уровней)
     private int getMageManaCost() {
         int reductions = heroLevel / 5;
         return Math.max(2, 7 - reductions);
@@ -187,7 +186,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Повышение уровня: полная регенерация HP/MP!
     private void addExperience(int amount) {
         currentExp += amount;
         boolean leveledUp = false;
@@ -199,8 +197,8 @@ public class MainActivity extends AppCompatActivity {
             leveledUp = true;
         }
         if (leveledUp) {
-            currentHealth = statHealth; // Восполнение HP
-            currentMana = getMaxMana(); // Восполнение MP
+            currentHealth = statHealth;
+            currentMana = getMaxMana();
             Toast.makeText(this, "✨ УРОВЕНЬ ПОВЫШЕН до " + heroLevel + "! Здоровье и Мана полностью восстановлены!", Toast.LENGTH_LONG).show();
         }
         updateHeroUI();
@@ -214,41 +212,133 @@ public class MainActivity extends AppCompatActivity {
         return currentBase;
     }
 
-    private void renderCurrentStoryNode() {
-        StoryNode node = storyManager.getCurrentNode();
-
-        if (node.getId().equals("corridor_forward") && !isInCombat) {
-            startCombat();
-            return;
-        }
-
+    // Отображение развилки с тремя вариантами движения (Прямо, Налево, Направо)
+    private void showRouteChoices(String headerMessage) {
         layoutAbilityContainer.setVisibility(View.GONE);
-        tvGameLog.setText(node.getText());
+        tvGameLog.setText(headerMessage + "\n\n🧭 **Выберите дальнейшее направление пути:**");
         layoutOptionsContainer.removeAllViews();
 
-        for (StoryNode.Option option : node.getOptions()) {
-            Button btnOption = new Button(this);
-            btnOption.setText(option.getText());
-            btnOption.setBackgroundResource(R.drawable.btn_3d_primary);
-            btnOption.setTextColor(Color.parseColor("#FFD700"));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(0, 0, 0, 12);
 
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-            );
-            params.setMargins(0, 0, 0, 12);
-            btnOption.setLayoutParams(params);
+        Button btnLeft = new Button(this);
+        btnLeft.setText("⬅️ Пойти НАЛЕВО");
+        btnLeft.setBackgroundResource(R.drawable.btn_3d_primary);
+        btnLeft.setTextColor(Color.parseColor("#FFD700"));
+        btnLeft.setLayoutParams(params);
+        btnLeft.setOnClickListener(v -> handleRouteSelection("LEFT"));
+        layoutOptionsContainer.addView(btnLeft);
 
-            btnOption.setOnClickListener(v -> {
-                storyManager.selectOption(option.getTargetNodeId());
-                renderCurrentStoryNode();
-            });
+        Button btnStraight = new Button(this);
+        btnStraight.setText("⬆️ Идти ПРЯМО");
+        btnStraight.setBackgroundResource(R.drawable.btn_3d_primary);
+        btnStraight.setTextColor(Color.parseColor("#FFD700"));
+        btnStraight.setLayoutParams(params);
+        btnStraight.setOnClickListener(v -> handleRouteSelection("STRAIGHT"));
+        layoutOptionsContainer.addView(btnStraight);
 
-            layoutOptionsContainer.addView(btnOption);
+        Button btnRight = new Button(this);
+        btnRight.setText("➡️ Пойти НАПРАВО");
+        btnRight.setBackgroundResource(R.drawable.btn_3d_primary);
+        btnRight.setTextColor(Color.parseColor("#FFD700"));
+        btnRight.setLayoutParams(params);
+        btnRight.setOnClickListener(v -> handleRouteSelection("RIGHT"));
+        layoutOptionsContainer.addView(btnRight);
+    }
+
+    // Обработка выбора дороги
+    private void handleRouteSelection(String direction) {
+        RouteManager.EventResult event = routeManager.generateEvent(direction, heroLevel);
+        routeManager.advanceDepth();
+
+        switch (event.type) {
+            case MONSTER:
+                startCombat(event.monster, event.description);
+                break;
+            case CHEST:
+                handleChestEvent(event.description);
+                break;
+            case SHRINE:
+                handleShrineEvent(event.description);
+                break;
+            case TRAP:
+                handleTrapEvent(event.description);
+                break;
         }
     }
 
-    private void startCombat() {
+    // Событие: Сундук
+    private void handleChestEvent(String desc) {
+        Random random = new Random();
+        StringBuilder chestLoot = new StringBuilder(desc + "\n\n📦 **Содержимое сундука:**\n");
+
+        if (random.nextDouble() <= 0.6) {
+            countMediumPotion++;
+            chestLoot.append("- 🧪 Среднее зелье HP\n");
+        }
+        if (random.nextDouble() <= 0.3) {
+            countManaPotion++;
+            chestLoot.append("- 💧 Зелье маны\n");
+        }
+        if (random.nextDouble() <= 0.2) {
+            countDodgeElixir++;
+            chestLoot.append("- ⚡ Эликсир уклонения\n");
+        } else {
+            countSmallPotion++;
+            chestLoot.append("- 🧪 Малое зелье HP\n");
+        }
+
+        tvGameLog.setText(chestLoot.toString());
+        layoutOptionsContainer.removeAllViews();
+
+        Button btnContinue = new Button(this);
+        btnContinue.setText("🗺️ Продолжить путь");
+        btnContinue.setBackgroundResource(R.drawable.btn_3d_primary);
+        btnContinue.setTextColor(Color.parseColor("#FFD700"));
+        btnContinue.setOnClickListener(v -> showRouteChoices("Вы успешно опустошили сундук и движетесь дальше."));
+        layoutOptionsContainer.addView(btnContinue);
+    }
+
+    // Событие: Святыня
+    private void handleShrineEvent(String desc) {
+        int healAmount = (int) (statHealth * 0.25);
+        int manaAmount = (int) (getMaxMana() * 0.25);
+        currentHealth = Math.min(statHealth, currentHealth + healAmount);
+        currentMana = Math.min(getMaxMana(), currentMana + manaAmount);
+        updateHeroUI();
+
+        tvGameLog.setText(desc + "\n\n✨ Святыня даровала вам благословение: восстановлено +" + healAmount + " HP и +" + manaAmount + " MP!");
+        layoutOptionsContainer.removeAllViews();
+
+        Button btnContinue = new Button(this);
+        btnContinue.setText("🗺️ Идти дальше");
+        btnContinue.setBackgroundResource(R.drawable.btn_3d_primary);
+        btnContinue.setTextColor(Color.parseColor("#FFD700"));
+        btnContinue.setOnClickListener(v -> showRouteChoices("Силы восстановлены, лабиринт ждет."));
+        layoutOptionsContainer.addView(btnContinue);
+    }
+
+    // Событие: Ловушка / Тупик
+    private void handleTrapEvent(String desc) {
+        int damage = 5 + heroLevel * 2;
+        currentHealth = Math.max(1, currentHealth - damage);
+        updateHeroUI();
+
+        tvGameLog.setText(desc + "\n\n⚠️ Вы задели скрытую ловушку в темноте и потеряли -" + damage + " HP!");
+        layoutOptionsContainer.removeAllViews();
+
+        Button btnContinue = new Button(this);
+        btnContinue.setText("🗺️ Выбраться и продолжить путь");
+        btnContinue.setBackgroundResource(R.drawable.btn_3d_primary);
+        btnContinue.setTextColor(Color.parseColor("#FFD700"));
+        btnContinue.setOnClickListener(v -> showRouteChoices("Вы осторожно выходите на новую развилку."));
+        layoutOptionsContainer.addView(btnContinue);
+    }
+
+    private void startCombat(Monster monster, String introMessage) {
         isInCombat = true;
         buffDodgeTurns = 0;
         buffArmorTurns = 0;
@@ -262,10 +352,10 @@ public class MainActivity extends AppCompatActivity {
             mageCooldownCombats--;
         }
 
-        activeMonster = Monster.generateMonster(heroLevel);
+        activeMonster = monster;
         layoutAbilityContainer.setVisibility(View.VISIBLE);
         updateHeroUI();
-        updateCombatScreen("⚔️ ВРАГ НА ПУТИ! (+20% MP восстановлено)");
+        updateCombatScreen(introMessage + "\n\n⚔️ Бой начался! (+20% MP восполнено)");
     }
 
     private void updateCombatScreen(String message) {
@@ -376,7 +466,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        int boostMultiplier = (heroLevel / 5); // +10% за каждые 5 уровней
+        int boostMultiplier = (heroLevel / 5);
 
         if (heroClass.equals("Воин")) {
             if (currentMana < 4) {
@@ -399,7 +489,7 @@ public class MainActivity extends AppCompatActivity {
             abilityUsedThisCombat = true;
             updateHeroUI();
 
-            double rogueBonus = 2.30 + (boostMultiplier * 0.10); // +10% к урону за каждые 5 уровней
+            double rogueBonus = 2.30 + (boostMultiplier * 0.10);
             double baseDmg = statStrength * (1.0 + rogueBonus);
             int finalDmg = (int) Math.max(1, baseDmg);
 
@@ -493,13 +583,10 @@ public class MainActivity extends AppCompatActivity {
         layoutOptionsContainer.removeAllViews();
 
         Button btnContinue = new Button(this);
-        btnContinue.setText("🗺️ Продолжить путь");
+        btnContinue.setText("🗺️ Выбрать дальнейший путь");
         btnContinue.setBackgroundResource(R.drawable.btn_3d_primary);
         btnContinue.setTextColor(Color.parseColor("#FFD700"));
-        btnContinue.setOnClickListener(v -> {
-            storyManager.selectOption("start");
-            renderCurrentStoryNode();
-        });
+        btnContinue.setOnClickListener(v -> showRouteChoices("Вы оглядываетесь по сторонам после победы."));
         layoutOptionsContainer.addView(btnContinue);
     }
 
@@ -591,8 +678,7 @@ public class MainActivity extends AppCompatActivity {
             btnRestart.setOnClickListener(v -> {
                 initHeroStats();
                 updateHeroUI();
-                storyManager.selectOption("start");
-                renderCurrentStoryNode();
+                showRouteChoices("🏰 Вы возвращаетесь к началу Бесконечного Лабиринта.");
             });
             layoutOptionsContainer.addView(btnRestart);
             return;
@@ -604,17 +690,14 @@ public class MainActivity extends AppCompatActivity {
     private void fleeCombat() {
         isInCombat = false;
         layoutAbilityContainer.setVisibility(View.GONE);
-        tvGameLog.setText("🏃 Вы сбежали от противника (" + activeMonster.getName() + ")!");
+        tvGameLog.setText("🏃 Вы успешно сбежали от противника (" + activeMonster.getName() + ") в безопасную зону лабиринта!");
         layoutOptionsContainer.removeAllViews();
 
         Button btnContinue = new Button(this);
-        btnContinue.setText("🚪 Вернуться к развилке");
+        btnContinue.setText("🧭 Выбрать новый путь");
         btnContinue.setBackgroundResource(R.drawable.btn_3d_primary);
         btnContinue.setTextColor(Color.parseColor("#FFD700"));
-        btnContinue.setOnClickListener(v -> {
-            storyManager.selectOption("start");
-            renderCurrentStoryNode();
-        });
+        btnContinue.setOnClickListener(v -> showRouteChoices("Вы перевели дух и выбираете дорогу."));
         layoutOptionsContainer.addView(btnContinue);
     }
 
