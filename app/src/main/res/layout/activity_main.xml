@@ -17,18 +17,21 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="48dp"
-            android:text="ЭХО СУДЬБЫ\nТекстовая RPG"
+            android:text="🗡️ ЭХО СУДЬБЫ 🛡️\nТекстовая RPG"
             android:gravity="center"
             android:textColor="@color/accent"
-            android:textSize="28sp"
+            android:textSize="30sp"
             android:textStyle="bold" />
 
         <Button
             android:id="@+id/btnStartMenu"
-            android:layout_width="200dp"
+            android:layout_width="220dp"
             android:layout_height="60dp"
+            android:background="@drawable/btn_3d_primary"
             android:text="@string/btn_start"
-            android:textSize="18sp" />
+            android:textColor="@color/accent"
+            android:textSize="18sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
     <!-- 2. СОЗДАНИЕ ПЕРСОНАЖА -->
@@ -44,7 +47,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="24dp"
             android:layout_marginBottom="24dp"
             android:text="@string/title_char_creation"
             android:textColor="@color/accent"
@@ -65,7 +68,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
-            android:text="Выберите класс:"
+            android:text="Выберите ваш класс:"
             android:textColor="@color/text_primary"
             android:textSize="16sp" />
 
@@ -80,7 +83,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="true"
-                android:text="@string/class_warrior"
+                android:text="🛡️ Воин (200 брони, Сила)"
                 android:textColor="@color/text_primary"
                 android:textSize="16sp" />
 
@@ -88,7 +91,7 @@
                 android:id="@+id/rbMage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/class_mage"
+                android:text="🔮 Маг (Мощная магия)"
                 android:textColor="@color/text_primary"
                 android:textSize="16sp" />
 
@@ -96,7 +99,7 @@
                 android:id="@+id/rbRogue"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/class_rogue"
+                android:text="🗡️ Разбойник (25% уклонения)"
                 android:textColor="@color/text_primary"
                 android:textSize="16sp" />
         </RadioGroup>
@@ -105,9 +108,12 @@
             android:id="@+id/btnCreateChar"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:layout_marginTop="40dp"
+            android:layout_marginTop="32dp"
+            android:background="@drawable/btn_3d_primary"
             android:text="@string/btn_create"
-            android:textSize="16sp" />
+            android:textColor="@color/accent"
+            android:textSize="16sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
     <!-- 3. ОСНОВНОЙ ИГРОВОЙ ЭКРАН -->
@@ -118,16 +124,15 @@
         android:orientation="vertical"
         android:visibility="gone">
 
-        <!-- ВЕРХНЯЯ ПАНЕЛЬ С ИНДИКАТОРАМИ И КНОПКОЙ ТАЛАНТОВ -->
+        <!-- ВЕРХНЯЯ ПАНЕЛЬ С ИНДИКАТОРАМИ -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/primary_variant"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:padding="10dp">
+            android:padding="12dp">
 
-            <!-- ИНДИКАТОРЫ ХП И МАНЫ В ЛЕВОМ УГЛУ -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -139,8 +144,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Имя (Класс)"
-                    android:textColor="@color/text_primary"
-                    android:textSize="15sp"
+                    android:textColor="@color/accent"
+                    android:textSize="16sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -151,7 +156,7 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
 
-                <!-- Полоса здоровья (Красная) -->
+                <!-- Полоса здоровья (3D Красная) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -161,46 +166,46 @@
                     <ProgressBar
                         android:id="@+id/pbHealth"
                         style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="120dp"
-                        android:layout_height="12dp"
+                        android:layout_width="130dp"
+                        android:layout_height="14dp"
                         android:max="100"
                         android:progress="100"
-                        android:progressDrawable="@android:drawable/progress_horizontal"
-                        android:progressTint="#FF3333" />
+                        android:progressDrawable="@drawable/pb_3d_health" />
                     <TextView
                         android:id="@+id/tvHealthStatus"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
+                        android:layout_marginStart="8dp"
                         android:text="100/100 HP"
                         android:textColor="#FF6666"
-                        android:textSize="11sp" />
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- Полоса маны (Синяя) -->
+                <!-- Полоса маны (3D Синяя) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
+                    android:layout_marginTop="3dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
                     <ProgressBar
                         android:id="@+id/pbMana"
                         style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="120dp"
-                        android:layout_height="12dp"
+                        android:layout_width="130dp"
+                        android:layout_height="14dp"
                         android:max="100"
                         android:progress="100"
-                        android:progressDrawable="@android:drawable/progress_horizontal"
-                        android:progressTint="#3399FF" />
+                        android:progressDrawable="@drawable/pb_3d_mana" />
                     <TextView
                         android:id="@+id/tvManaStatus"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
+                        android:layout_marginStart="8dp"
                         android:text="30/30 MP"
                         android:textColor="#66B2FF"
-                        android:textSize="11sp" />
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -208,10 +213,15 @@
                 android:id="@+id/btnOpenTalents"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/btn_talents" />
+                android:background="@drawable/btn_3d_primary"
+                android:paddingHorizontal="12dp"
+                android:text="@string/btn_talents"
+                android:textColor="@color/accent"
+                android:textSize="13sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- ТЕКСТ СЮЖЕТА И ПАНЕЛЬ С КНОПКОЙ СПОСОБНОСТИ СПРАВА -->
+        <!-- ЦЕНТРАЛЬНЫЙ ТЕКСТ СЮЖЕТА И ПРАВАЯ 3D-КНОПКА АБИЛКИ -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -228,13 +238,12 @@
                     android:id="@+id/tvGameLog"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:lineSpacingExtra="4dp"
+                    android:lineSpacingExtra="5dp"
                     android:text="Загрузка сюжета..."
                     android:textColor="@color/text_primary"
                     android:textSize="16sp" />
             </ScrollView>
 
-            <!-- КВАДРАТНАЯ КНОПКА СПОСОБНОСТИ СПРАВА В БОЮ -->
             <LinearLayout
                 android:id="@+id/layoutAbilityContainer"
                 android:layout_width="wrap_content"
@@ -246,8 +255,9 @@
 
                 <Button
                     android:id="@+id/btnClassAbility"
-                    android:layout_width="75dp"
-                    android:layout_height="75dp"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:background="@drawable/btn_3d_primary"
                     android:padding="2dp"
                     android:text="Раж"
                     android:textColor="#FFFFFF"
